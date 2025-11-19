@@ -1,15 +1,21 @@
-require("dotenv").config();
-const { Pool } = require("pg");
+import dotenv from "dotenv";
+import { Pool, PoolClient } from "pg";
+
+dotenv.config();
 
 const pool = new Pool({
   host: process.env.DB_HOST || "localhost",
-  port: process.env.DB_PORT || 5432,
+  port: parseInt(process.env.DB_PORT || "5432", 10),
   database: process.env.DB_NAME || "vibeup_db",
   user: process.env.DB_USER || "postgres",
   password: process.env.DB_PASSWORD,
 });
 
-async function testConnection() {
+interface ErrorWithCode extends Error {
+  code?: string;
+}
+
+async function testConnection(): Promise<void> {
   console.log("🔍 Testing database connection...\n");
   console.log("Configuration:");
   console.log(`  Host: ${process.env.DB_HOST || "localhost"}`);
@@ -19,7 +25,7 @@ async function testConnection() {
 
   try {
     // Test connection
-    const client = await pool.connect();
+    const client: PoolClient = await pool.connect();
     console.log("✅ Database connection successful!\n");
 
     // Get database version
@@ -42,7 +48,7 @@ async function testConnection() {
 
     console.log("\n📋 Tables in database:");
     if (tablesResult.rows.length > 0) {
-      tablesResult.rows.forEach((row) => {
+      tablesResult.rows.forEach((row: { table_name: string }) => {
         console.log(`  - ${row.table_name}`);
       });
     } else {
@@ -51,7 +57,8 @@ async function testConnection() {
 
     client.release();
     process.exit(0);
-  } catch (err) {
+  } catch (error) {
+    const err = error as ErrorWithCode;
     console.error("❌ Database connection failed!\n");
     console.error("Error details:");
     console.error(`  Message: ${err.message}`);
@@ -72,3 +79,6 @@ async function testConnection() {
 }
 
 testConnection();
+
+
+
