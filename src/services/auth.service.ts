@@ -44,11 +44,12 @@ export class AuthService {
       );
 
       // Generate JWT tokens for the user to be used in the frontend
-      const tokens = this.generateTokens(user);
+      // const tokens = this.generateTokens(user);
 
       return {
         user,
-        ...tokens,
+        token: accessToken,
+        refreshToken: accessToken, // to be implemented later
       };
     } catch (error) {
       console.error("Google login error:", error);
@@ -88,24 +89,24 @@ export class AuthService {
     return payload;
   }
 
-  /**
-   * Generate access and refresh tokens for a user
-   */
-  generateTokens(user: User): { token: string; refreshToken: string } {
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET!,
-      { expiresIn: "1h" }
-    );
+  // /**
+  //  * Generate access and refresh tokens for a user
+  //  */
+  // generateTokens(user: User): { token: string; refreshToken: string } {
+  //   const token = jwt.sign(
+  //     { id: user.id, email: user.email },
+  //     process.env.JWT_SECRET!,
+  //     { expiresIn: "1h" }
+  //   );
 
-    const refreshToken = jwt.sign(
-      { id: user.id },
-      process.env.JWT_REFRESH_SECRET!,
-      { expiresIn: "7d" }
-    );
+  //   const refreshToken = jwt.sign(
+  //     { id: user.id },
+  //     process.env.JWT_REFRESH_SECRET!,
+  //     { expiresIn: "7d" }
+  //   );
 
-    return { token, refreshToken };
-  }
+  //   return { token, refreshToken };
+  // }
 
   /**
    * Verify JWT access token
