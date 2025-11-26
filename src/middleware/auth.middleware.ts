@@ -1,42 +1,43 @@
 import { Request, Response, NextFunction } from "express";
-import { authService } from "../services/auth.service";
-import { userRepository } from "../repositories/user.repository";
+import { OAuth2Client } from "google-auth-library";
 
-/**
- * Middleware to authenticate requests using JWT tokens
- * Validates the token and attaches the user to the request object
- */
-export const authMiddleware = async (
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+
+export async function googleAuth(
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<void | Response> => {
-  try {
-    // Extract token from Authorization header
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
+) {
+  const header = req.headers.authorization;
+
+  if (!header?.startsWith("Bearer ")) {
       return res.status(401).json({ message: "No token provided" });
     }
 
-    // Parse Bearer token
-    const token = authHeader.split(" ")[1];
-    if (!token) {
-      return res.status(401).json({ message: "Invalid token format" });
-    }
+  const token = header.split(" ")[1];
 
-    // Verify token
-    const payload: any = authService.verifyAccessToken(token);
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
 
-    // Get user from database
-    const user = await userRepository.findById(payload.id);
-    if (!user) {
-      return res.status(401).json({ message: "User not found" });
-    }
+    const payload = ticket.getPayload();
+    if (!payload) return res.status(401).json({ message: "Invalid token" });
 
-    // Attach user to request
-    (req as any).user = user;
-    return next();
+    // attach user info to request
+    req.user = {
+      googleId: payload.sub,
+      email: payload.email,
+      name: payload.name,
+      picture: payload.picture,
+    };
+
+    next();
+    return;
   } catch (err) {
-    return res.status(401).json({ message: "Invalid or expired token" });
+    console.error("Token verification failed:", err);
+    return res.status(401).json({ message: "Invalid Google token" });
   }
-};
+}
