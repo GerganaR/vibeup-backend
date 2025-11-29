@@ -2,11 +2,12 @@ import express, { Application } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
-import routes from "./routes";
+import { errorHandler } from "./core/errors/errorHandler.middleware";
+import { correlationId } from "./core/middleware/correlationId.middleware";
+import routes from "./core/routes";
 
 const app: Application = express();
 
-// Middleware
 app.use(helmet());
 app.use(
   cors({
@@ -17,9 +18,10 @@ app.use(
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(correlationId);
 
-// Mount all routes
 app.use(routes);
 
-// TODO: Add error handling middleware
+app.use(errorHandler);
+
 export default app;
