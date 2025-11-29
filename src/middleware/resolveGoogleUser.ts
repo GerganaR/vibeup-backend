@@ -18,29 +18,13 @@ export async function resolveGoogleUser(
 
   try {
     // 1. find or create the user
-    const { user, created } = await userRepository.findOrCreateByGoogleId(
-      googleId,
-      {
-        email: email || "",
-        name: name || "",
-        avatarUrl: picture,
-      }
-    );
+    const { user } = await userRepository.findOrCreateByGoogleId(googleId, {
+      email: email || "",
+      name: name || "",
+      avatarUrl: picture,
+    });
 
-    // 2. If user exists but profile info is missing/changed, update profile
-    const needUpdate =
-      (!user.email && email) ||
-      (!user.name && name) ||
-      (!user.avatarUrl && picture);
-
-    if (!created && needUpdate) {
-      await userRepository.updateProfile(user.id, {
-        name: user.name || name,
-        avatarUrl: user.avatarUrl || picture,
-      });
-    }
-
-    // 3. Attach user to request
+    // 2. Attach user to request
     req.authenticatedUser = user;
 
     return next();

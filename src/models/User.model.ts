@@ -7,8 +7,12 @@ import {
   DataType,
   IsEmail,
   Unique,
+  HasMany,
 } from "sequelize-typescript";
 import { v4 as uuidv4 } from "uuid";
+import { Event } from "./Event.model";
+import { EventAttendee } from "./EventAttendee.model";
+import { EventCohost } from "./EventCohost.model";
 
 @Table({
   tableName: "users",
@@ -31,9 +35,16 @@ export class User extends Model {
   @Column(DataType.STRING)
   avatarUrl?: string;
 
-  // OAuth provider: google, github, apple, etc., For now only google is supported
-  // TODO: Add other providers and create UserIdentity model
   @Unique
   @Column(DataType.STRING)
   googleId!: string;
+
+  @HasMany(() => Event, "hostId")
+  hostedEvents!: Event[];
+
+  @HasMany(() => EventAttendee, "userId")
+  eventAttendees!: EventAttendee[];
+
+  @HasMany(() => EventCohost, "userId")
+  eventCohosts!: EventCohost[];
 }
