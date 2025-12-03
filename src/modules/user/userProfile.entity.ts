@@ -7,18 +7,18 @@ import {
   ForeignKey,
   BelongsTo,
 } from "sequelize-typescript";
+import { UserIdentity } from "./userIdentity.entity";
 
-import { UserEntity } from "./user.entity";
 
 @Table({ tableName: "user_profiles", timestamps: true })
 export class UserProfile extends Model {
   @PrimaryKey
-  @ForeignKey(() => UserEntity)
+  @ForeignKey(() => UserIdentity)
   @Column(DataType.UUID)
   id!: string;
 
-  @BelongsTo(() => UserEntity)
-  user!: UserEntity;
+  @BelongsTo(() => UserIdentity)
+  user!: UserIdentity;
 
   @Column(DataType.STRING)
   name!: string;

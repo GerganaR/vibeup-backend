@@ -10,7 +10,7 @@ import {
 } from "sequelize-typescript";
 import { v4 as uuidv4 } from "uuid";
 import { Event } from "./event.model";
-import { UserEntity } from "../user/user.entity";
+import { UserIdentity } from "../user/userIdentity.entity";
 
 @Table({
   tableName: "event_cohosts",
@@ -26,13 +26,13 @@ export class EventCohost extends Model {
   @Column(DataType.UUID)
   eventId!: string;
 
-  @ForeignKey(() => UserEntity)
+  @ForeignKey(() => UserIdentity)
   @Column(DataType.UUID)
   userId!: string;
 
   @BelongsTo(() => Event, "eventId")
   event!: Event;
 
-  @BelongsTo(() => UserEntity, "userId")
-  user!: UserEntity;
+  @BelongsTo(() => UserIdentity, "userId")
+  user!: UserIdentity;
 }

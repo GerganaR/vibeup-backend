@@ -1,10 +1,10 @@
 import { sequelize } from "@/core/config/database";
-import { UserEntity } from "./user.entity";
 import { UserProfile } from "./userProfile.entity";
+import { UserIdentity } from "./userIdentity.entity";
 
 export class UserRepository {
   async findByGoogleId(googleId: string) {
-    return UserEntity.findOne({
+    return UserIdentity.findOne({
       where: { googleId },
       include: [UserProfile],
     });
@@ -18,7 +18,7 @@ export class UserRepository {
     locale?: string;
   }) {
     return await sequelize.transaction(async (t) => {
-      const user = await UserEntity.create(
+      const user = await UserIdentity.create(
         { googleId: data.googleId },
         { transaction: t }
       );
@@ -34,7 +34,7 @@ export class UserRepository {
         { transaction: t }
       );
 
-      return await UserEntity.findOne({
+      return await UserIdentity.findOne({
         where: { googleId: data.googleId },
         include: [UserProfile],
         transaction: t,

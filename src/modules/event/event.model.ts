@@ -10,9 +10,9 @@ import {
   BelongsTo,
 } from "sequelize-typescript";
 import { v4 as uuidv4 } from "uuid";
-import { UserEntity } from "../user/user.entity";
 import { EventAttendee } from "./eventAttendee.model";
 import { EventCohost } from "./eventCohost.model";
+import { UserIdentity } from "../user/userIdentity.entity";
 
 @Table({
   tableName: "events",
@@ -48,12 +48,12 @@ export class Event extends Model {
   @Column(DataType.INTEGER)
   capacity?: number;
 
-  @ForeignKey(() => UserEntity)
+  @ForeignKey(() => UserIdentity)
   @Column(DataType.UUID)
   hostId!: string;
 
-  @BelongsTo(() => UserEntity, "hostId")
-  host!: UserEntity;
+  @BelongsTo(() => UserIdentity, "hostId")
+  host!: UserIdentity;
 
   @HasMany(() => EventAttendee)
   attendees!: EventAttendee[];

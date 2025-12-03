@@ -2,6 +2,7 @@ import express, { Application } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import "./core/types/express";
 import { errorHandler } from "./core/errors/errorHandler.middleware";
 import { correlationId } from "./core/middleware/correlationId.middleware";
 import routes from "./core/routes";
