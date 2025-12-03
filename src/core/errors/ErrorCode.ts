@@ -1,4 +1,3 @@
-// src/core/errors/ErrorCode.ts
 export enum ErrorCode {
     BAD_REQUEST = "BAD_REQUEST",
     UNAUTHORIZED = "UNAUTHORIZED",
@@ -7,7 +6,6 @@ export enum ErrorCode {
     CONFLICT = "CONFLICT",
     INTERNAL = "INTERNAL_ERROR",
   
-    // Domain-specific
     EVENT_NOT_FOUND = "EVENT_NOT_FOUND",
     USER_NOT_FOUND = "USER_NOT_FOUND",
     INVALID_TIME_RANGE = "INVALID_TIME_RANGE",

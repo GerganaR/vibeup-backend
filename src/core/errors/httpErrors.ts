@@ -1,4 +1,3 @@
-// src/core/errors/httpErrors.ts
 import { AppError } from "./AppError";
 import { ErrorCode } from "./ErrorCode";
 
