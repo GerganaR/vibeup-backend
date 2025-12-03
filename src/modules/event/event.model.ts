@@ -13,6 +13,8 @@ import { v4 as uuidv4 } from "uuid";
 import { EventAttendee } from "./eventAttendee.model";
 import { EventCohost } from "./eventCohost.model";
 import { UserIdentity } from "../user/userIdentity.entity";
+// import { EventRules } from "./event.rules";
+// import { UpdateEventDTO } from "./event.dto";
 
 @Table({
   tableName: "events",
@@ -60,4 +62,37 @@ export class Event extends Model {
 
   @HasMany(() => EventCohost)
   cohosts!: EventCohost[];
+
+  // // ---------- DOMAIN METHODS ----------
+  // changeSchedule(start: Date, end: Date) {
+  //   EventRules.validateDates(start, end);
+  //   this.startDateTime = start;
+  //   this.endDateTime = end;
+  // }
+
+  // updateCohosts(newIds: string[]) {
+  //   const existing = this.cohosts.map(c => c.userId);
+
+  //   const toAdd = newIds.filter(id => !existing.includes(id));
+  //   const toRemove = existing.filter(id => !newIds.includes(id));
+
+  //   this.setDataValue("cohostsToAdd", toAdd);
+  //   this.setDataValue("cohostsToRemove", toRemove);
+  // }
+
+  // updateFromDTO(dto: UpdateEventDTO) {
+  //   if (dto.title !== undefined) this.title = dto.title;
+  //   if (dto.description !== undefined) this.description = dto.description;
+
+  //   if (dto.startDateTime && dto.endDateTime) {
+  //     this.changeSchedule(dto.startDateTime, dto.endDateTime);
+  //   }
+
+  //   if (dto.cohostIds) {
+  //     EventRules.ensureNoDuplicateCohosts(dto.cohostIds);
+  //     EventRules.ensureCohostNotHost(dto.cohostIds, this.hostId);
+
+  //     this.updateCohosts(dto.cohostIds);
+  //   }
+  // }
 }
