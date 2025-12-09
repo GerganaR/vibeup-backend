@@ -51,13 +51,16 @@ export class EventRepository implements IEventRepository {
   async save(event: Event): Promise<void> {
     await sequelize.transaction(async (transaction: Transaction) => {
       const eventData = EventMapper.toPersistence(event);
-
-      const [affectedRows] = await EventModel.update(eventData, {
-        where: { id: event.id },
+      const existingEvent = await EventModel.findByPk(event.id, {
         transaction,
       });
 
-      if (affectedRows === 0) {
+      if (existingEvent) {
+        await EventModel.update(eventData, {
+          where: { id: event.id },
+          transaction,
+        });
+      } else {
         await EventModel.create(eventData, { transaction });
       }
 

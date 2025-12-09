@@ -34,18 +34,31 @@ export class EventMapper {
   }
 
   static toPersistence(event: Event): Partial<EventModel> {
-    return {
+    const data: Partial<EventModel> = {
       id: event.id,
       title: event.title,
-      description: event.description,
-      categories: event.categories,
       startDateTime: event.startDateTime,
       endDateTime: event.endDateTime,
-      latitude: event.latitude,
-      longitude: event.longitude,
-      capacity: event.capacity,
       hostId: event.hostId,
       updatedAt: new Date(),
     };
+
+    if (event.description !== undefined) {
+      data.description = event.description;
+    }
+    if (event.categories !== undefined) {
+      data.categories = event.categories;
+    }
+    if (event.latitude !== undefined) {
+      data.latitude = event.latitude;
+    }
+    if (event.longitude !== undefined) {
+      data.longitude = event.longitude;
+    }
+    if (event.capacity !== undefined) {
+      data.capacity = event.capacity;
+    }
+
+    return data;
   }
 }
