@@ -1,6 +1,6 @@
 import { IEventRepository } from "../domain/repositories/IEventRepository";
-import { EventAggregate } from "../domain/EventAggregate";
-import { Event } from "../event.model";
+import { Event } from "../domain/Event";
+import { Event as EventModel } from "../event.model";
 import { EventAttendee } from "../eventAttendee.model";
 import { EventCohost } from "../eventCohost.model";
 import { EventMapper } from "./EventMapper";
@@ -8,8 +8,8 @@ import { sequelize } from "@/core/config/database";
 import { Transaction } from "sequelize";
 
 export class EventRepository implements IEventRepository {
-  async findById(id: string): Promise<EventAggregate | null> {
-    const eventModel = await Event.findOne({
+  async findById(id: string): Promise<Event | null> {
+    const eventModel = await EventModel.findOne({
       where: { id },
       include: [
         {
@@ -30,8 +30,8 @@ export class EventRepository implements IEventRepository {
     return EventMapper.toDomain(eventModel);
   }
 
-  async findAll(): Promise<EventAggregate[]> {
-    const eventModels = await Event.findAll({
+  async findAll(): Promise<Event[]> {
+    const eventModels = await EventModel.findAll({
       include: [
         {
           model: EventAttendee,
@@ -48,17 +48,17 @@ export class EventRepository implements IEventRepository {
     return eventModels.map((model) => EventMapper.toDomain(model));
   }
 
-  async save(event: EventAggregate): Promise<void> {
+  async save(event: Event): Promise<void> {
     await sequelize.transaction(async (transaction: Transaction) => {
       const eventData = EventMapper.toPersistence(event);
 
-      const [affectedRows] = await Event.update(eventData, {
+      const [affectedRows] = await EventModel.update(eventData, {
         where: { id: event.id },
         transaction,
       });
 
       if (affectedRows === 0) {
-        await Event.create(eventData, { transaction });
+        await EventModel.create(eventData, { transaction });
       }
 
       await this.syncCohosts(event, transaction);
@@ -78,7 +78,7 @@ export class EventRepository implements IEventRepository {
         transaction,
       });
 
-      await Event.destroy({
+      await EventModel.destroy({
         where: { id },
         transaction,
       });
@@ -86,7 +86,7 @@ export class EventRepository implements IEventRepository {
   }
 
   private async syncCohosts(
-    event: EventAggregate,
+    event: Event,
     transaction: Transaction
   ): Promise<void> {
     const changes = event.getCohostChanges();
@@ -113,7 +113,7 @@ export class EventRepository implements IEventRepository {
   }
 
   private async syncAttendees(
-    event: EventAggregate,
+    event: Event,
     transaction: Transaction
   ): Promise<void> {
     const changes = event.getAttendeeChanges();

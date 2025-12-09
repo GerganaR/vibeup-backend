@@ -1,9 +1,9 @@
-import { EventAggregate } from "../EventAggregate";
+import { Event } from "../Event";
 
 export interface IEventRepository {
-  findById(id: string): Promise<EventAggregate | null>;
-  findAll(): Promise<EventAggregate[]>;
-  save(event: EventAggregate): Promise<void>;
+  findById(id: string): Promise<Event | null>;
+  findAll(): Promise<Event[]>;
+  save(event: Event): Promise<void>;
   delete(id: string): Promise<void>;
 }
 

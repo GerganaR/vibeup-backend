@@ -1,10 +1,10 @@
-import { EventAggregate } from "../domain/EventAggregate";
-import { Event } from "../event.model";
+import { Event } from "../domain/Event";
+import { Event as EventModel } from "../event.model";
 import { EventAttendee } from "../eventAttendee.model";
 import { EventCohost } from "../eventCohost.model";
 
 export class EventMapper {
-  static toDomain(eventModel: Event): EventAggregate {
+  static toDomain(eventModel: EventModel): Event {
     const attendees = (eventModel.attendees || []).map((a: EventAttendee) => ({
       userId: a.userId,
       eventId: a.eventId,
@@ -15,7 +15,7 @@ export class EventMapper {
       eventId: c.eventId,
     }));
 
-    return EventAggregate.reconstitute({
+    return Event.reconstitute({
       id: eventModel.id,
       title: eventModel.title,
       description: eventModel.description || undefined,
@@ -33,7 +33,7 @@ export class EventMapper {
     });
   }
 
-  static toPersistence(event: EventAggregate): Partial<Event> {
+  static toPersistence(event: Event): Partial<EventModel> {
     return {
       id: event.id,
       title: event.title,
@@ -49,4 +49,3 @@ export class EventMapper {
     };
   }
 }
-

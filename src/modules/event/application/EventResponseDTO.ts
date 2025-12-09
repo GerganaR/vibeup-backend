@@ -1,4 +1,4 @@
-import { EventAggregate } from "../domain/EventAggregate";
+import { Event } from "../domain/Event";
 
 export interface EventResponseDTO {
   id: string;
@@ -18,7 +18,7 @@ export interface EventResponseDTO {
 }
 
 export class EventResponseMapper {
-  static toDTO(event: EventAggregate): EventResponseDTO {
+  static toDTO(event: Event): EventResponseDTO {
     return {
       id: event.id,
       title: event.title,
@@ -43,7 +43,7 @@ export class EventResponseMapper {
     };
   }
 
-  static toDTOArray(events: EventAggregate[]): EventResponseDTO[] {
+  static toDTOArray(events: Event[]): EventResponseDTO[] {
     return events.map((event) => this.toDTO(event));
   }
 }

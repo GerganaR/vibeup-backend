@@ -2,20 +2,10 @@ import { EventCohost } from "./value-objects/EventCohost";
 import { EventAttendee } from "./value-objects/EventAttendee";
 import { Schedule } from "./value-objects/Schedule";
 import { Location } from "./value-objects/Location";
-import { EventCreated } from "./domain-events/EventCreated";
-import { EventUpdated } from "./domain-events/EventUpdated";
-import { EventDeleted } from "./domain-events/EventDeleted";
-import { AttendeeAdded } from "./domain-events/AttendeeAdded";
-import { AttendeeRemoved } from "./domain-events/AttendeeRemoved";
-import { CohostAdded } from "./domain-events/CohostAdded";
-import { CohostRemoved } from "./domain-events/CohostRemoved";
-import { DomainEvent } from "@/core/domain/DomainEvent";
 import { EventCohostCollection } from "./collections/EventCohostCollection";
 import { EventAttendeeCollection } from "./collections/EventAttendeeCollection";
 
-export class EventAggregate {
-  private domainEvents: DomainEvent[] = [];
-
+export class Event {
   private constructor(
     public readonly id: string,
     private _title: string,
@@ -42,24 +32,24 @@ export class EventAggregate {
     longitude?: number;
     capacity?: number;
     hostId: string;
-    cohostIds?: string[];
-  }): EventAggregate {
+    // cohostIds?: string[];
+  }): Event {
     const schedule = Schedule.create(params.startDateTime, params.endDateTime);
     const location =
       params.latitude && params.longitude
         ? Location.create(params.latitude, params.longitude)
         : undefined;
 
-    const cohostVOs = (params.cohostIds || []).map((userId) =>
-      EventCohost.create(userId, params.id)
-    );
+    // const cohostVOs = (params.cohostIds || []).map((userId) =>
+    //   EventCohost.create(userId, params.id)
+    // );
 
-    EventAggregate.validateCohosts(cohostVOs, params.hostId);
+    // Event.validateCohosts(cohostVOs, params.hostId);
 
-    const cohosts = new EventCohostCollection(cohostVOs);
+    const cohosts = new EventCohostCollection();
     const attendees = new EventAttendeeCollection();
 
-    const event = new EventAggregate(
+    const event = new Event(
       params.id,
       params.title,
       params.description,
@@ -73,8 +63,6 @@ export class EventAggregate {
       new Date(),
       new Date()
     );
-
-    event.addDomainEvent(new EventCreated(event.id, event.hostId));
 
     return event;
   }
@@ -94,7 +82,7 @@ export class EventAggregate {
     attendees: Array<{ userId: string; eventId: string }>;
     createdAt: Date;
     updatedAt: Date;
-  }): EventAggregate {
+  }): Event {
     const schedule = Schedule.create(params.startDateTime, params.endDateTime);
     const location =
       params.latitude && params.longitude
@@ -112,7 +100,7 @@ export class EventAggregate {
     const cohosts = new EventCohostCollection(cohostVOs);
     const attendees = new EventAttendeeCollection(attendeeVOs);
 
-    return new EventAggregate(
+    return new Event(
       params.id,
       params.title,
       params.description,
@@ -237,8 +225,6 @@ export class EventAggregate {
     if (params.cohostIds !== undefined) {
       this.updateCohosts(params.cohostIds);
     }
-
-    this.addDomainEvent(new EventUpdated(this.id));
   }
 
   private updateCohosts(newCohostIds: string[]): void {
@@ -246,7 +232,7 @@ export class EventAggregate {
       EventCohost.create(id, this.id)
     );
 
-    EventAggregate.validateCohosts(newCohostVOs, this.hostId);
+    Event.validateCohosts(newCohostVOs, this.hostId);
 
     const currentCohostIds = new Set(
       Array.from(this._cohosts).map((c) => c.userId)
@@ -256,7 +242,6 @@ export class EventAggregate {
     for (const cohost of this._cohosts) {
       if (!newCohostIdsSet.has(cohost.userId)) {
         this._cohosts.registerRemoved(cohost);
-        this.addDomainEvent(new CohostRemoved(this.id, cohost.userId));
       }
     }
 
@@ -264,7 +249,6 @@ export class EventAggregate {
       if (!currentCohostIds.has(userId)) {
         const cohost = EventCohost.create(userId, this.id);
         this._cohosts.registerNew(cohost);
-        this.addDomainEvent(new CohostAdded(this.id, userId));
       }
     }
   }
@@ -276,7 +260,6 @@ export class EventAggregate {
 
     const attendee = EventAttendee.create(userId, this.id);
     this._attendees.registerNew(attendee);
-    this.addDomainEvent(new AttendeeAdded(this.id, userId));
   }
 
   removeAttendee(userId: string): void {
@@ -287,7 +270,6 @@ export class EventAggregate {
     );
     if (attendee) {
       this._attendees.registerRemoved(attendee);
-      this.addDomainEvent(new AttendeeRemoved(this.id, userId));
     }
   }
 
@@ -304,7 +286,7 @@ export class EventAggregate {
   }
 
   markAsDeleted(): void {
-    this.addDomainEvent(new EventDeleted(this.id));
+    // Marked as deleted
   }
 
   private ensureNotFull(): void {
@@ -327,7 +309,7 @@ export class EventAggregate {
     }
   }
 
-  private static validateCohosts(cohosts: EventCohost[], hostId: string): void {
+  static validateCohosts(cohosts: EventCohost[], hostId: string): void {
     const cohostIds = cohosts.map((c) => c.userId);
     const unique = new Set(cohostIds);
 
@@ -338,17 +320,5 @@ export class EventAggregate {
     if (cohostIds.includes(hostId)) {
       throw new Error("Host cannot be added as a cohost.");
     }
-  }
-
-  private addDomainEvent(event: DomainEvent): void {
-    this.domainEvents.push(event);
-  }
-
-  getDomainEvents(): DomainEvent[] {
-    return [...this.domainEvents];
-  }
-
-  clearDomainEvents(): void {
-    this.domainEvents = [];
   }
 }
