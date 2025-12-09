@@ -2,11 +2,12 @@ import { UserAggregate } from "../domain/UserAggregate";
 
 export interface UserResponseDTO {
   id: string;
-  googleId: string;
-  name: string;
-  avatarUrl?: string;
-  email: string;
-  locale?: string;
+  profile: {
+    id: string;
+    name: string;
+    email: string;
+    avatarUrl?: string;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -15,14 +16,14 @@ export class UserResponseMapper {
   static toDTO(user: UserAggregate): UserResponseDTO {
     return {
       id: user.id,
-      googleId: user.googleId,
-      name: user.name,
-      avatarUrl: user.avatarUrl,
-      email: user.email,
-      locale: user.locale,
+      profile: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        avatarUrl: user.avatarUrl,
+      },
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
   }
 }
-
