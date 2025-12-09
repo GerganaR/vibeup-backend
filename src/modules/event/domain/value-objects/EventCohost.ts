@@ -1,19 +1,12 @@
 export class EventCohost {
-  private constructor(
-    public readonly userId: string,
-    public readonly eventId: string
-  ) {}
+  private constructor(public readonly userId: string) {}
 
-  static create(userId: string, eventId: string): EventCohost {
-    if (!userId || !eventId) {
-      throw new Error("EventCohost requires both userId and eventId");
-    }
-
-    return new EventCohost(userId, eventId);
+  static create(userId: string): EventCohost {
+    if (!userId) throw new Error("EventCohost requires userId");
+    return new EventCohost(userId);
   }
 
   equals(other: EventCohost): boolean {
-    return this.userId === other.userId && this.eventId === other.eventId;
+    return this.userId === other.userId;
   }
 }
-

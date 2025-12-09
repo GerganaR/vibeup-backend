@@ -7,6 +7,6 @@ export class EventCohostCollection extends TrackedValueObjectCollection<EventCoh
   }
 
   protected getHash(value: EventCohost): string {
-    return `${value.eventId}:${value.userId}`;
+    return value.userId;
   }
 }

@@ -32,24 +32,17 @@ export class Event {
     longitude?: number;
     capacity?: number;
     hostId: string;
-    // cohostIds?: string[];
   }): Event {
     const schedule = Schedule.create(params.startDateTime, params.endDateTime);
     const location =
-      params.latitude && params.longitude
+      params.latitude != null && params.longitude != null
         ? Location.create(params.latitude, params.longitude)
         : undefined;
-
-    // const cohostVOs = (params.cohostIds || []).map((userId) =>
-    //   EventCohost.create(userId, params.id)
-    // );
-
-    // Event.validateCohosts(cohostVOs, params.hostId);
 
     const cohosts = new EventCohostCollection();
     const attendees = new EventAttendeeCollection();
 
-    const event = new Event(
+    return new Event(
       params.id,
       params.title,
       params.description,
@@ -63,8 +56,6 @@ export class Event {
       new Date(),
       new Date()
     );
-
-    return event;
   }
 
   static reconstitute(params: {
@@ -78,23 +69,22 @@ export class Event {
     longitude?: number;
     capacity?: number;
     hostId: string;
-    cohosts: Array<{ userId: string; eventId: string }>;
-    attendees: Array<{ userId: string; eventId: string }>;
+    cohosts: string[];  
+    attendees: string[];
     createdAt: Date;
     updatedAt: Date;
   }): Event {
     const schedule = Schedule.create(params.startDateTime, params.endDateTime);
     const location =
-      params.latitude && params.longitude
+      params.latitude != null && params.longitude != null
         ? Location.create(params.latitude, params.longitude)
         : undefined;
 
-    const cohostVOs = params.cohosts.map((c) =>
-      EventCohost.create(c.userId, c.eventId)
+    const cohostVOs = params.cohosts.map((userId) =>
+      EventCohost.create(userId)
     );
-
-    const attendeeVOs = params.attendees.map((a) =>
-      EventAttendee.create(a.userId, a.eventId)
+    const attendeeVOs = params.attendees.map((userId) =>
+      EventAttendee.create(userId)
     );
 
     const cohosts = new EventCohostCollection(cohostVOs);
@@ -186,8 +176,8 @@ export class Event {
     categories?: string[];
     startDateTime?: Date;
     endDateTime?: Date;
-    latitude?: number;
-    longitude?: number;
+    latitude?: number | null;
+    longitude?: number | null;
     capacity?: number;
     cohostIds?: string[];
   }): void {
@@ -228,27 +218,21 @@ export class Event {
   }
 
   private updateCohosts(newCohostIds: string[]): void {
-    const newCohostVOs = newCohostIds.map((id) =>
-      EventCohost.create(id, this.id)
-    );
+    const cohostVOs = newCohostIds.map((id) => EventCohost.create(id));
+    Event.validateCohosts(cohostVOs, this.hostId);
 
-    Event.validateCohosts(newCohostVOs, this.hostId);
+    const currentIds = new Set(this.cohosts.map((c) => c.userId));
+    const newIdsSet = new Set(newCohostIds);
 
-    const currentCohostIds = new Set(
-      Array.from(this._cohosts).map((c) => c.userId)
-    );
-    const newCohostIdsSet = new Set(newCohostIds);
-
-    for (const cohost of this._cohosts) {
-      if (!newCohostIdsSet.has(cohost.userId)) {
-        this._cohosts.registerRemoved(cohost);
+    for (const existing of this.cohosts) {
+      if (!newIdsSet.has(existing.userId)) {
+        this._cohosts.registerRemoved(existing);
       }
     }
 
     for (const userId of newCohostIds) {
-      if (!currentCohostIds.has(userId)) {
-        const cohost = EventCohost.create(userId, this.id);
-        this._cohosts.registerNew(cohost);
+      if (!currentIds.has(userId)) {
+        this._cohosts.registerNew(EventCohost.create(userId));
       }
     }
   }
@@ -258,16 +242,14 @@ export class Event {
     this.ensureNotFull();
     this.ensureNotAlreadyAttending(userId);
 
-    const attendee = EventAttendee.create(userId, this.id);
+    const attendee = EventAttendee.create(userId);
     this._attendees.registerNew(attendee);
   }
 
   removeAttendee(userId: string): void {
     this.ensureIsAttending(userId);
 
-    const attendee = Array.from(this._attendees).find(
-      (a) => a.userId === userId
-    );
+    const attendee = this.attendees.find((a) => a.userId === userId);
     if (attendee) {
       this._attendees.registerRemoved(attendee);
     }
@@ -285,10 +267,6 @@ export class Event {
     }
   }
 
-  markAsDeleted(): void {
-    // Marked as deleted
-  }
-
   private ensureNotFull(): void {
     if (this._capacity != null && this._attendees.count() >= this._capacity) {
       throw new Error("Event capacity is full.");
@@ -296,14 +274,14 @@ export class Event {
   }
 
   private ensureNotAlreadyAttending(userId: string): void {
-    const attendee = EventAttendee.create(userId, this.id);
+    const attendee = EventAttendee.create(userId);
     if (this._attendees.has(attendee)) {
       throw new Error("User is already attending this event.");
     }
   }
 
   private ensureIsAttending(userId: string): void {
-    const attendee = EventAttendee.create(userId, this.id);
+    const attendee = EventAttendee.create(userId);
     if (!this._attendees.has(attendee)) {
       throw new Error("User is not attending this event.");
     }

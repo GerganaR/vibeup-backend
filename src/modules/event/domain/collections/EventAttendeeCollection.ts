@@ -7,6 +7,6 @@ export class EventAttendeeCollection extends TrackedValueObjectCollection<EventA
   }
 
   protected getHash(value: EventAttendee): string {
-    return `${value.eventId}:${value.userId}`;
+    return value.userId;
   }
 }
