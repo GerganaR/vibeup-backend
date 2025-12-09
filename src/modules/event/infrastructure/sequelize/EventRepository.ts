@@ -1,23 +1,33 @@
-import { IEventRepository } from "../domain/repositories/IEventRepository";
-import { Event } from "../domain/Event";
-import { Event as EventModel } from "../event.model";
-import { EventAttendee } from "../eventAttendee.model";
-import { EventCohost } from "../eventCohost.model";
+import { IEventRepository } from "../../domain/repositories/IEventRepository";
+import { Event } from "../../domain/Event";
+import { EventModel } from "./models/EventModel";
+import { EventAttendeeModel } from "./models/EventAttendeeModel";
+import { EventCohostModel } from "./models/EventCohostModel";
 import { EventMapper } from "./EventMapper";
 import { sequelize } from "@/core/config/database";
 import { Transaction } from "sequelize";
 
+/**
+ * EventRepository - Infrastructure implementation of IEventRepository
+ *
+ */
 export class EventRepository implements IEventRepository {
+  /**
+   * Finds an Event by ID and reconstitutes it as a domain aggregate
+   *
+   * @param id - Event identifier
+   * @returns Domain Event aggregate or null if not found
+   */
   async findById(id: string): Promise<Event | null> {
     const eventModel = await EventModel.findOne({
       where: { id },
       include: [
         {
-          model: EventAttendee,
+          model: EventAttendeeModel,
           as: "attendees",
         },
         {
-          model: EventCohost,
+          model: EventCohostModel,
           as: "cohosts",
         },
       ],
@@ -30,15 +40,20 @@ export class EventRepository implements IEventRepository {
     return EventMapper.toDomain(eventModel);
   }
 
+  /**
+   * Finds all Events and reconstitutes them as domain aggregates
+   *
+   * @returns Array of domain Event aggregates
+   */
   async findAll(): Promise<Event[]> {
     const eventModels = await EventModel.findAll({
       include: [
         {
-          model: EventAttendee,
+          model: EventAttendeeModel,
           as: "attendees",
         },
         {
-          model: EventCohost,
+          model: EventCohostModel,
           as: "cohosts",
         },
       ],
@@ -48,6 +63,18 @@ export class EventRepository implements IEventRepository {
     return eventModels.map((model) => EventMapper.toDomain(model));
   }
 
+  /**
+   * Saves an Event aggregate to persistence
+   *
+   * This method:
+   * 1. Maps the domain aggregate to persistence format
+   * 2. Creates or updates the event record
+   * 3. Synchronizes cohosts and attendees based on tracked changes
+   *
+   * All operations are performed within a transaction to ensure atomicity.
+   *
+   * @param event - Domain Event aggregate to persist
+   */
   async save(event: Event): Promise<void> {
     await sequelize.transaction(async (transaction: Transaction) => {
       const eventData = EventMapper.toPersistence(event);
@@ -69,14 +96,19 @@ export class EventRepository implements IEventRepository {
     });
   }
 
+  /**
+   * Deletes an Event and all related records
+   *
+   * @param id - Event identifier
+   */
   async delete(id: string): Promise<void> {
     await sequelize.transaction(async (transaction: Transaction) => {
-      await EventAttendee.destroy({
+      await EventAttendeeModel.destroy({
         where: { eventId: id },
         transaction,
       });
 
-      await EventCohost.destroy({
+      await EventCohostModel.destroy({
         where: { eventId: id },
         transaction,
       });
@@ -88,6 +120,15 @@ export class EventRepository implements IEventRepository {
     });
   }
 
+  /**
+   * Synchronizes cohosts based on tracked changes in the domain aggregate
+   *
+   * Uses the EventCohostCollection's change tracking to determine
+   * which cohosts to add and which to remove.
+   *
+   * @param event - Domain Event aggregate
+   * @param transaction - Sequelize transaction
+   */
   private async syncCohosts(
     event: Event,
     transaction: Transaction
@@ -95,9 +136,8 @@ export class EventRepository implements IEventRepository {
     const changes = event.getCohostChanges();
 
     if (changes.new.length > 0) {
-      await EventCohost.bulkCreate(
+      await EventCohostModel.bulkCreate(
         changes.new.map((c) => ({
-          eventId: c.eventId,
           userId: c.userId,
         })),
         { transaction }
@@ -105,7 +145,7 @@ export class EventRepository implements IEventRepository {
     }
 
     if (changes.removed.length > 0) {
-      await EventCohost.destroy({
+      await EventCohostModel.destroy({
         where: {
           eventId: event.id,
           userId: changes.removed.map((c) => c.userId),
@@ -115,6 +155,15 @@ export class EventRepository implements IEventRepository {
     }
   }
 
+  /**
+   * Synchronizes attendees based on tracked changes in the domain aggregate
+   *
+   * Uses the EventAttendeeCollection's change tracking to determine
+   * which attendees to add and which to remove.
+   *
+   * @param event - Domain Event aggregate
+   * @param transaction - Sequelize transaction
+   */
   private async syncAttendees(
     event: Event,
     transaction: Transaction
@@ -122,9 +171,8 @@ export class EventRepository implements IEventRepository {
     const changes = event.getAttendeeChanges();
 
     if (changes.new.length > 0) {
-      await EventAttendee.bulkCreate(
+      await EventAttendeeModel.bulkCreate(
         changes.new.map((a) => ({
-          eventId: a.eventId,
           userId: a.userId,
         })),
         { transaction }
@@ -132,7 +180,7 @@ export class EventRepository implements IEventRepository {
     }
 
     if (changes.removed.length > 0) {
-      await EventAttendee.destroy({
+      await EventAttendeeModel.destroy({
         where: {
           eventId: event.id,
           userId: changes.removed.map((a) => a.userId),
