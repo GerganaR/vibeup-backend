@@ -2,7 +2,7 @@ import { Event } from "../domain/Event";
 import { IEventRepository } from "../domain/repositories/IEventRepository";
 import { NotFoundError } from "@/core/errors/httpErrors";
 import { v4 as uuidv4 } from "uuid";
-import { CreateEventDTO, UpdateEventDTO } from "../event.dto";
+import { CreateEventDTO, UpdateEventDTO } from "../ui/event.dto";
 
 export class EventApplicationService {
   constructor(private readonly eventRepository: IEventRepository) {}
@@ -67,7 +67,6 @@ export class EventApplicationService {
     const event = await this.getEventById(id);
 
     event.ensureHost(userId);
-    event.markAsDeleted();
 
     await this.eventRepository.delete(id);
   }

@@ -1,7 +1,6 @@
-import { Event } from "./event.model";
+import { Event } from "../../domain/Event";
 
 export const EventPolicy = {
-
   ensureHost(event: Event, userId: string) {
     if (event.hostId !== userId) {
       throw new Error("You are not the host of this event");
@@ -13,5 +12,4 @@ export const EventPolicy = {
       throw new Error("Hosts cannot perform this action");
     }
   },
-
 };

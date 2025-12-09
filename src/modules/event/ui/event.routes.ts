@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { verifyGoogleToken } from "../auth/verifyGoogleToken.middleware";
-import { resolveUser } from "../auth/resolveUser.middleware.";
+import { verifyGoogleToken } from "../../auth/verifyGoogleToken.middleware";
 import { eventController } from "./event.controller";
+import { resolveUser } from "@/modules/auth/resolveUser.middleware.";
 
 const router = Router();
 

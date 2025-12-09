@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { EventApplicationService } from "./application/EventApplicationService";
-import { EventResponseMapper } from "./application/EventResponseDTO";
+import { EventApplicationService } from "../application/EventApplicationService";
+import { EventResponseMapper } from "../application/EventResponseDTO";
 import { wrapController } from "@/core/utils/wrapController";
 
 export class EventController {
@@ -64,10 +64,15 @@ export class EventController {
   }
 }
 
-// Dependency injection setup
-import { EventRepository } from "./infrastructure/EventRepository";
-const eventRepository = new EventRepository();
+// -------------------------------------------------------------------
+// Dependency injection setup (use Raw SQL instead of Sequelize)
+// -------------------------------------------------------------------
+
+import { SqlEventRepository } from "../infrastructure/sql/SqlEventRepository";
+
+const eventRepository = new SqlEventRepository();
 const eventApplicationService = new EventApplicationService(eventRepository);
+
 export const eventController = wrapController(
   new EventController(eventApplicationService)
 );

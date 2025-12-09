@@ -1,4 +1,4 @@
-import { Event } from "./event.model";
+import { Event } from "../../domain/Event";
 
 export class EventRules {
   /**
