@@ -1,10 +1,13 @@
 import { Request, Response } from "express";
+import { injectable, inject } from "inversify";
+import { TYPES } from "@/core/di/types";
 import { EventApplicationService } from "../application/EventApplicationService";
 import { EventResponseMapper } from "../application/EventResponseDTO";
-import { wrapController } from "@/core/utils/wrapController";
 
+@injectable()
 export class EventController {
   constructor(
+    @inject(TYPES.EventApplicationService)
     private readonly eventApplicationService: EventApplicationService
   ) {}
 
@@ -22,10 +25,7 @@ export class EventController {
 
   async create(req: Request, res: Response) {
     const user = req.authenticatedUser!;
-    const event = await this.eventApplicationService.createEvent(
-      req.body,
-      user.id
-    );
+    const event = await this.eventApplicationService.createEvent(req.body, user.id);
     res.status(201).json(EventResponseMapper.toDTO(event));
   }
 
@@ -47,10 +47,7 @@ export class EventController {
 
   async rsvp(req: Request, res: Response) {
     const user = req.authenticatedUser!;
-    const event = await this.eventApplicationService.rsvp(
-      req.params.id,
-      user.id
-    );
+    const event = await this.eventApplicationService.rsvp(req.params.id, user.id);
     res.json(EventResponseMapper.toDTO(event));
   }
 
@@ -63,16 +60,3 @@ export class EventController {
     res.json(EventResponseMapper.toDTO(event));
   }
 }
-
-// -------------------------------------------------------------------
-// Dependency injection setup (use Raw SQL instead of Sequelize)
-// -------------------------------------------------------------------
-
-import { SqlEventRepository } from "../infrastructure/sql/SqlEventRepository";
-
-const eventRepository = new SqlEventRepository();
-const eventApplicationService = new EventApplicationService(eventRepository);
-
-export const eventController = wrapController(
-  new EventController(eventApplicationService)
-);

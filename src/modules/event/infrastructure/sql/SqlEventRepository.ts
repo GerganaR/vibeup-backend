@@ -2,7 +2,9 @@ import { IEventRepository } from "../../domain/repositories/IEventRepository";
 import { Event } from "../../domain/Event";
 import { sequelize } from "@/core/config/database";
 import { QueryTypes } from "sequelize";
+import { injectable } from "inversify";
 
+@injectable()
 export class SqlEventRepository implements IEventRepository {
   async findById(id: string): Promise<Event | null> {
     const rows = await sequelize.query(

@@ -4,6 +4,7 @@ dotenv.config();
 import { sequelize } from "./core/config/database";
 import { initEventTables } from "./core/config/initEventTables";
 import app from "./app";
+import "reflect-metadata";
 
 const PORT: number = parseInt(process.env.PORT || "5000", 10);
 

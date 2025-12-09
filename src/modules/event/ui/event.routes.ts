@@ -1,47 +1,31 @@
 import { Router } from "express";
-import { verifyGoogleToken } from "../../auth/verifyGoogleToken.middleware";
-import { eventController } from "./event.controller";
+import { container } from "@/core/di/container";
+import { TYPES } from "@/core/di/types";
+import { EventController } from "./event.controller";
+import { wrapController } from "@/core/utils/wrapController";
+import { verifyGoogleToken } from "@/modules/auth/verifyGoogleToken.middleware";
 import { resolveUser } from "@/modules/auth/resolveUser.middleware.";
 
 const router = Router();
 
-router.get("/", eventController.getAll.bind(eventController));
-router.get("/:id", eventController.getById.bind(eventController));
-
-
-router.post(
-  "/",
-  verifyGoogleToken,
-  resolveUser,
-  eventController.create.bind(eventController)
+const controller = wrapController(
+  container.get<EventController>(TYPES.EventController)
 );
 
-router.put(
-  "/:id",
-  verifyGoogleToken,
-  resolveUser,
-  eventController.update.bind(eventController)
-);
+// Routes
+router.get("/", controller.getAll);
+router.get("/:id", controller.getById);
 
-router.delete(
-  "/:id",
-  verifyGoogleToken,
-  resolveUser,
-  eventController.delete.bind(eventController)
-);
+router.post("/", verifyGoogleToken, resolveUser, controller.create);
+router.put("/:id", verifyGoogleToken, resolveUser, controller.update);
+router.delete("/:id", verifyGoogleToken, resolveUser, controller.delete);
 
-router.post(
-  "/:id/rsvp",
-  verifyGoogleToken,
-  resolveUser,
-  eventController.rsvp.bind(eventController)
-);
-
+router.post("/:id/rsvp", verifyGoogleToken, resolveUser, controller.rsvp);
 router.delete(
   "/:id/rsvp",
   verifyGoogleToken,
   resolveUser,
-  eventController.cancelRsvp.bind(eventController)
+  controller.cancelRsvp
 );
 
 export default router;

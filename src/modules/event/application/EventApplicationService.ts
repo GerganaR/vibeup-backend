@@ -3,9 +3,14 @@ import { IEventRepository } from "../domain/repositories/IEventRepository";
 import { NotFoundError } from "@/core/errors/httpErrors";
 import { v4 as uuidv4 } from "uuid";
 import { CreateEventDTO, UpdateEventDTO } from "../ui/event.dto";
-
+import { inject, injectable } from "inversify";
+import { TYPES } from "@/core/di/types";
+@injectable()
 export class EventApplicationService {
-  constructor(private readonly eventRepository: IEventRepository) {}
+  constructor(
+    @inject(TYPES.IEventRepository)
+    private readonly eventRepository: IEventRepository
+  ) {}
 
   async getAllEvents(): Promise<Event[]> {
     return this.eventRepository.findAll();
