@@ -57,13 +57,9 @@ export class EventApplicationService {
       title: dto.title,
       description: dto.description,
       categories: dto.categories,
-      startDateTime: dto.startDateTime,
-      endDateTime: dto.endDateTime,
       address: dto.address,
       latitude: dto.latitude,
       longitude: dto.longitude,
-      capacity: dto.capacity,
-      cohostIds: dto.cohostIds,
     });
 
     await this.eventRepository.save(event);

@@ -11,4 +11,11 @@ export interface CreateEventDTO {
   cohostIds?: string[];
 }
 
-export interface UpdateEventDTO extends Partial<CreateEventDTO> {}
+export interface UpdateEventDTO {
+  title?: string;
+  description?: string;
+  categories?: string[];
+  address?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+}
