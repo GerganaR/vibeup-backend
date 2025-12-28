@@ -13,6 +13,7 @@ export class Event {
     private _categories: string[] | undefined,
     private _schedule: Schedule,
     private _location: Location | undefined,
+    private _address: string,
     private _capacity: number | undefined,
     public readonly hostId: string,
     private _cohosts: EventCohostCollection,
@@ -28,6 +29,7 @@ export class Event {
     categories?: string[];
     startDateTime: Date;
     endDateTime: Date;
+    address: string;
     latitude?: number;
     longitude?: number;
     capacity?: number;
@@ -49,6 +51,7 @@ export class Event {
       params.categories,
       schedule,
       location,
+      params.address,
       params.capacity,
       params.hostId,
       cohosts,
@@ -65,11 +68,12 @@ export class Event {
     categories?: string[];
     startDateTime: Date;
     endDateTime: Date;
+    address: string;
     latitude?: number;
     longitude?: number;
     capacity?: number;
     hostId: string;
-    cohosts: string[];  
+    cohosts: string[];
     attendees: string[];
     createdAt: Date;
     updatedAt: Date;
@@ -97,6 +101,7 @@ export class Event {
       params.categories,
       schedule,
       location,
+      params.address,
       params.capacity,
       params.hostId,
       cohosts,
@@ -132,6 +137,10 @@ export class Event {
 
   get longitude(): number | undefined {
     return this._location?.longitude;
+  }
+
+  get address(): string {
+    return this._address;
   }
 
   get capacity(): number | undefined {
@@ -176,6 +185,7 @@ export class Event {
     categories?: string[];
     startDateTime?: Date;
     endDateTime?: Date;
+    address?: string;
     latitude?: number | null;
     longitude?: number | null;
     capacity?: number;
@@ -198,6 +208,10 @@ export class Event {
         params.startDateTime,
         params.endDateTime
       );
+    }
+
+    if (params.address !== undefined) {
+      this._address = params.address;
     }
 
     if (params.latitude !== undefined && params.longitude !== undefined) {

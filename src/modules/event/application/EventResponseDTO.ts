@@ -7,6 +7,7 @@ export interface EventResponseDTO {
   categories?: string[];
   startDateTime: Date;
   endDateTime: Date;
+  address: string;
   latitude?: number;
   longitude?: number;
   capacity?: number;
@@ -26,6 +27,7 @@ export class EventResponseMapper {
       categories: event.categories,
       startDateTime: event.startDateTime,
       endDateTime: event.endDateTime,
+      address: event.address,
       latitude: event.latitude,
       longitude: event.longitude,
       capacity: event.capacity,
@@ -41,4 +43,3 @@ export class EventResponseMapper {
     return events.map((event) => this.toDTO(event));
   }
 }
-

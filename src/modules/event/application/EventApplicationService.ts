@@ -36,6 +36,7 @@ export class EventApplicationService {
       longitude: dto.longitude,
       capacity: dto.capacity,
       hostId,
+      address: dto.address,
       // cohostIds: dto.cohostIds,
     });
 
@@ -58,6 +59,7 @@ export class EventApplicationService {
       categories: dto.categories,
       startDateTime: dto.startDateTime,
       endDateTime: dto.endDateTime,
+      address: dto.address,
       latitude: dto.latitude,
       longitude: dto.longitude,
       capacity: dto.capacity,

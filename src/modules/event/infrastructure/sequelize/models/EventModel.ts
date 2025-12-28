@@ -39,6 +39,9 @@ export class EventModel extends Model {
   @Column(DataType.DATE)
   endDateTime!: Date;
 
+  @Column(DataType.TEXT)
+  address!: string;
+
   @Column(DataType.FLOAT)
   latitude?: number;
 

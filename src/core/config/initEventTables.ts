@@ -9,6 +9,7 @@ export async function initEventTables() {
       categories TEXT[],
       start_datetime TIMESTAMP NOT NULL,
       end_datetime   TIMESTAMP NOT NULL,
+      address TEXT NOT NULL,
       latitude DOUBLE PRECISION,
       longitude DOUBLE PRECISION,
       capacity INTEGER,

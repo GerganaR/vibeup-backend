@@ -32,6 +32,7 @@ export class EventMapper {
       categories: eventModel.categories || undefined,
       startDateTime: eventModel.startDateTime,
       endDateTime: eventModel.endDateTime,
+      address: eventModel.address,
       latitude: eventModel.latitude || undefined,
       longitude: eventModel.longitude || undefined,
       capacity: eventModel.capacity || undefined,
@@ -60,6 +61,7 @@ export class EventMapper {
     categories?: string[];
     startDateTime: Date;
     endDateTime: Date;
+    address: string;
     latitude?: number;
     longitude?: number;
     capacity?: number;
@@ -73,6 +75,7 @@ export class EventMapper {
       categories: event.categories,
       startDateTime: event.startDateTime,
       endDateTime: event.endDateTime,
+      address: event.address,
       latitude: event.latitude,
       longitude: event.longitude,
       capacity: event.capacity,

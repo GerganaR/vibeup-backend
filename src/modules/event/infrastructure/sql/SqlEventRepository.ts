@@ -7,10 +7,10 @@ import { injectable } from "inversify";
 @injectable()
 export class SqlEventRepository implements IEventRepository {
   async findById(id: string): Promise<Event | null> {
-    const rows = await sequelize.query(
-      `SELECT * FROM events WHERE id = $1`,
-      { bind: [id], type: QueryTypes.SELECT }
-    );
+    const rows = await sequelize.query(`SELECT * FROM events WHERE id = $1`, {
+      bind: [id],
+      type: QueryTypes.SELECT,
+    });
 
     if (rows.length === 0) return null;
     const e: any = rows[0];
@@ -38,6 +38,7 @@ export class SqlEventRepository implements IEventRepository {
       hostId: e.host_id,
       attendees: (attendeeRows as any[]).map((r) => r.user_id),
       cohosts: (cohostRows as any[]).map((r) => r.user_id),
+      address: e.address,
       createdAt: e.created_at,
       updatedAt: e.updated_at,
     });
@@ -67,9 +68,10 @@ export class SqlEventRepository implements IEventRepository {
         categories: event.categories,
         startDateTime: event.startDateTime,
         endDateTime: event.endDateTime,
+        address: event.address,
         latitude: event.latitude,
         longitude: event.longitude,
-        capacity: event.capacity,
+        capacity: event.capacity ?? null,
         hostId: event.hostId,
       };
 
@@ -77,8 +79,8 @@ export class SqlEventRepository implements IEventRepository {
         `
         INSERT INTO events (
           id, title, description, categories, start_datetime, end_datetime,
-          latitude, longitude, capacity, host_id
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+          latitude, longitude, capacity, host_id, address 
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
         ON CONFLICT (id) DO UPDATE SET
           title = EXCLUDED.title,
           description = EXCLUDED.description,
@@ -88,6 +90,7 @@ export class SqlEventRepository implements IEventRepository {
           latitude = EXCLUDED.latitude,
           longitude = EXCLUDED.longitude,
           capacity = EXCLUDED.capacity,
+          address = EXCLUDED.address,
           updated_at = now()
         `,
         {
@@ -102,6 +105,7 @@ export class SqlEventRepository implements IEventRepository {
             data.longitude,
             data.capacity,
             data.hostId,
+            data.address,
           ],
           transaction: t,
         }
