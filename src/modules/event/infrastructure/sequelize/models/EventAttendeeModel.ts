@@ -9,20 +9,20 @@ import {
   Table,
 } from "sequelize-typescript";
 import { v4 as uuidv4 } from "uuid";
-import { Event } from "./event.model";
-import { UserIdentity } from "../user/userIdentity.entity";
+import { EventModel } from "./EventModel";
+import { UserIdentity } from "../../../user/userIdentity.entity";
 
 @Table({
-  tableName: "event_cohosts",
+  tableName: "event_attendees",
   timestamps: true,
 })
-export class EventCohost extends Model {
+export class EventAttendeeModel extends Model {
   @PrimaryKey
   @Default(uuidv4)
   @Column(DataType.UUID)
   id!: string;
 
-  @ForeignKey(() => Event)
+  @ForeignKey(() => EventModel)
   @Column(DataType.UUID)
   eventId!: string;
 
@@ -30,8 +30,8 @@ export class EventCohost extends Model {
   @Column(DataType.UUID)
   userId!: string;
 
-  @BelongsTo(() => Event, "eventId")
-  event!: Event;
+  @BelongsTo(() => EventModel, "eventId")
+  event!: EventModel;
 
   @BelongsTo(() => UserIdentity, "userId")
   user!: UserIdentity;

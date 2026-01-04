@@ -10,15 +10,15 @@ import {
   BelongsTo,
 } from "sequelize-typescript";
 import { v4 as uuidv4 } from "uuid";
-import { EventAttendee } from "./eventAttendee.model";
-import { EventCohost } from "./eventCohost.model";
-import { UserIdentity } from "../user/userIdentity.entity";
+import { EventAttendeeModel } from "./EventAttendeeModel";
+import { EventCohostModel } from "./EventCohostModel";
+import { UserIdentity } from "../../../user/userIdentity.entity";
 
 @Table({
   tableName: "events",
   timestamps: true,
 })
-export class Event extends Model {
+export class EventModel extends Model {
   @PrimaryKey
   @Default(uuidv4)
   @Column(DataType.UUID)
@@ -39,6 +39,9 @@ export class Event extends Model {
   @Column(DataType.DATE)
   endDateTime!: Date;
 
+  @Column(DataType.TEXT)
+  address!: string;
+
   @Column(DataType.FLOAT)
   latitude?: number;
 
@@ -55,9 +58,9 @@ export class Event extends Model {
   @BelongsTo(() => UserIdentity, "hostId")
   host!: UserIdentity;
 
-  @HasMany(() => EventAttendee)
-  attendees!: EventAttendee[];
+  @HasMany(() => EventAttendeeModel)
+  attendees!: EventAttendeeModel[];
 
-  @HasMany(() => EventCohost)
-  cohosts!: EventCohost[];
+  @HasMany(() => EventCohostModel)
+  cohosts!: EventCohostModel[];
 }

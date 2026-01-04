@@ -1,11 +1,11 @@
 import type { GoogleAuthenticatedUser } from "@/modules/auth/auth.types";
-import type { UserIdentity } from "@/modules/user/userIdentity.entity";
+import type { UserResponseDTO } from "@/modules/user/application/UserResponseDTO";
 
 declare global {
   namespace Express {
     interface Request {
       authenticatedGoogleUser?: GoogleAuthenticatedUser;
-      authenticatedUser?: UserIdentity;
+      authenticatedUser?: UserResponseDTO;
     }
   }
 }
