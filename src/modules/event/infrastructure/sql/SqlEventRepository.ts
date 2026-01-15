@@ -23,7 +23,10 @@ export class SqlEventRepository implements IEventRepository {
     );
 
     const attendeeRows = await sequelize.query(
-      `SELECT user_id FROM event_attendees WHERE event_id = $1`,
+      `SELECT ea.user_id, up.name, up."avatarUrl" 
+       FROM event_attendees ea
+       LEFT JOIN user_profiles up ON ea.user_id = up.id
+       WHERE ea.event_id = $1`,
       { bind: [id], type: QueryTypes.SELECT }
     );
 
@@ -47,7 +50,11 @@ export class SqlEventRepository implements IEventRepository {
       longitude: e.longitude,
       capacity: e.capacity,
       hostId: e.host_id,
-      attendees: (attendeeRows as any[]).map((r) => r.user_id),
+      attendees: (attendeeRows as any[]).map((r) => ({
+        id: r.user_id,
+        name: r.name || "Unknown",
+        avatarUrl: r.avatarUrl,
+      })),
       cohosts: (cohostRows as any[]).map((r) => r.user_id),
       address: e.address,
       createdAt: e.created_at,

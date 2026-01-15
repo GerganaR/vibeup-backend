@@ -9,6 +9,7 @@ import {
   Table,
 } from "sequelize-typescript";
 import { v4 as uuidv4 } from "uuid";
+import { UserIdentity } from "@/modules/user/user.entity";
 import { EventModel } from "./EventModel";
 
 @Table({
@@ -27,6 +28,9 @@ export class EventAttendeeModel extends Model {
 
   @Column(DataType.UUID)
   userId!: string;
+
+  @BelongsTo(() => UserIdentity, "userId")
+  user!: UserIdentity;
 
   @BelongsTo(() => EventModel, "eventId")
   event!: EventModel;

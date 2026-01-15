@@ -83,7 +83,7 @@ export class Event {
     capacity?: number;
     hostId: string;
     cohosts: string[];
-    attendees: string[];
+    attendees: { id: string; name: string; avatarUrl?: string }[];
     createdAt: Date;
     updatedAt: Date;
   }): Event {
@@ -101,8 +101,8 @@ export class Event {
     const cohostVOs = params.cohosts.map((userId) =>
       EventCohost.create(userId)
     );
-    const attendeeVOs = params.attendees.map((userId) =>
-      EventAttendee.create(userId)
+    const attendeeVOs = params.attendees.map((attendee) =>
+      EventAttendee.create(attendee.id, attendee.name, attendee.avatarUrl)
     );
 
     const cohosts = new EventCohostCollection(cohostVOs);
@@ -335,15 +335,20 @@ export class Event {
   }
 
   private ensureNotAlreadyAttending(userId: string): void {
-    const attendee = EventAttendee.create(userId);
-    if (this._attendees.has(attendee)) {
+    const isAttending = Array.from(this._attendees).some(
+      (a) => a.userId === userId
+    );
+    
+    if (isAttending) {
       throw new Error("User is already attending this event.");
     }
   }
 
   private ensureIsAttending(userId: string): void {
-    const attendee = EventAttendee.create(userId);
-    if (!this._attendees.has(attendee)) {
+    const isAttending = Array.from(this._attendees).some(
+      (a) => a.userId === userId
+    );
+    if (!isAttending) {
       throw new Error("User is not attending this event.");
     }
   }

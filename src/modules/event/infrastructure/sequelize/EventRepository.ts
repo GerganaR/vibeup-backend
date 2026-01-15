@@ -6,6 +6,8 @@ import { EventCohostModel } from "./models/EventCohostModel";
 import { EventMapper } from "./EventMapper";
 import { sequelize } from "@/core/config/database";
 import { Transaction } from "sequelize";
+import { UserIdentity } from "@/modules/user/user.entity";
+import { UserProfile } from "@/modules/user/userProfile.entity";
 
 /**
  * EventRepository - Infrastructure implementation of IEventRepository
@@ -25,6 +27,13 @@ export class EventRepository implements IEventRepository {
         {
           model: EventAttendeeModel,
           as: "attendees",
+          include: [
+            {
+              model: UserIdentity,
+              as: "user",
+              include: [{ model: UserProfile, as: "profile" }],
+            },
+          ],
         },
         {
           model: EventCohostModel,
@@ -51,6 +60,13 @@ export class EventRepository implements IEventRepository {
         {
           model: EventAttendeeModel,
           as: "attendees",
+          include: [
+            {
+              model: UserIdentity,
+              as: "user",
+              include: [{ model: UserProfile, as: "profile" }],
+            },
+          ],
         },
         {
           model: EventCohostModel,

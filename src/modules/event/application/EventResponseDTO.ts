@@ -13,7 +13,7 @@ export interface EventResponseDTO {
   capacity?: number;
   hostId: string;
   cohosts: string[];
-  attendees: string[];
+  attendees: { id: string; name: string; avatarUrl?: string }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -35,7 +35,11 @@ export class EventResponseMapper {
       longitude: event.longitude,
       capacity: event.capacity,
       hostId: event.hostId,
-      attendees: event.attendees.map((a) => a.userId),
+      attendees: event.attendees.map((a) => ({
+        id: a.userId,
+        name: a.name,
+        avatarUrl: a.avatarUrl,
+      })),
       cohosts: event.cohosts.map((c) => c.userId),
       createdAt: event.createdAt,
       updatedAt: event.updatedAt,

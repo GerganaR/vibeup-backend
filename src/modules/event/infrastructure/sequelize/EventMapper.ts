@@ -19,7 +19,11 @@ export class EventMapper {
    */
   static toDomain(eventModel: EventModel): Event {
     const attendees = (eventModel.attendees || []).map(
-      (a: EventAttendeeModel) => a.userId
+      (a: EventAttendeeModel) => ({
+        id: a.userId,
+        name: a.user?.profile?.name || "Unknown",
+        avatarUrl: a.user?.profile?.avatarUrl,
+      })
     );
 
     const cohosts = (eventModel.cohosts || []).map(

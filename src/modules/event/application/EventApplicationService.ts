@@ -93,7 +93,8 @@ export class EventApplicationService {
     event.addAttendee(userId);
 
     await this.eventRepository.save(event);
-    return event;
+
+    return this.getEventById(eventId);
   }
 
   async cancelRsvp(eventId: string, userId: string): Promise<Event> {

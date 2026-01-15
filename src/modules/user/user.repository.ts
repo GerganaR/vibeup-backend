@@ -41,6 +41,11 @@ export class UserRepository {
       });
     });
   }
+  async findById(id: string) {
+    return UserIdentity.findByPk(id, {
+      include: [UserProfile],
+    });
+  }
 }
 
 export const userRepository = new UserRepository();

@@ -15,6 +15,10 @@ export class UserService {
       locale: googleUser.locale,
     });
   }
+
+  async findById(userId: string) {
+    return await userRepository.findById(userId);
+  }
 }
 
 export const userService = new UserService();
