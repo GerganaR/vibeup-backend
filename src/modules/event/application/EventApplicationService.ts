@@ -5,11 +5,15 @@ import { v4 as uuidv4 } from "uuid";
 import { CreateEventDTO, UpdateEventDTO } from "../ui/event.dto";
 import { inject, injectable } from "inversify";
 import { TYPES } from "@/core/di/types";
+import { EventCategoryValidator } from "../domain/services/EventCategoryValidator";
+
 @injectable()
 export class EventApplicationService {
   constructor(
     @inject(TYPES.IEventRepository)
-    private readonly eventRepository: IEventRepository
+    private readonly eventRepository: IEventRepository,
+    @inject(TYPES.EventCategoryValidator)
+    private readonly categoryValidator: EventCategoryValidator
   ) {}
 
   async getAllEvents(): Promise<Event[]> {
@@ -25,11 +29,16 @@ export class EventApplicationService {
   }
 
   async createEvent(dto: CreateEventDTO, hostId: string): Promise<Event> {
+    // Validate categories exist
+    if (dto.categoryIds && dto.categoryIds.length > 0) {
+      await this.categoryValidator.validateCategoriesExist(dto.categoryIds);
+    }
+
     const event = Event.create({
       id: uuidv4(),
       title: dto.title,
       description: dto.description,
-      categories: dto.categories,
+      categoryIds: dto.categoryIds,
       startDateTime: dto.startDateTime,
       endDateTime: dto.endDateTime,
       latitude: dto.latitude,
@@ -37,7 +46,6 @@ export class EventApplicationService {
       capacity: dto.capacity,
       hostId,
       address: dto.address,
-      // cohostIds: dto.cohostIds,
     });
 
     await this.eventRepository.save(event);
@@ -49,6 +57,11 @@ export class EventApplicationService {
     dto: UpdateEventDTO,
     userId: string
   ): Promise<Event> {
+    // Validate categories exist if provided
+    if (dto.categoryIds && dto.categoryIds.length > 0) {
+      await this.categoryValidator.validateCategoriesExist(dto.categoryIds);
+    }
+
     const event = await this.getEventById(id);
 
     event.ensureHost(userId);
@@ -56,7 +69,7 @@ export class EventApplicationService {
     event.update({
       title: dto.title,
       description: dto.description,
-      categories: dto.categories,
+      categoryIds: dto.categoryIds,
       address: dto.address,
       latitude: dto.latitude,
       longitude: dto.longitude,

@@ -3,6 +3,7 @@ dotenv.config();
 
 import { sequelize } from "./core/config/database";
 import { initEventTables } from "./core/config/initEventTables";
+import { seedCategories } from "./core/config/seeders/CategorySeeder";
 import app from "./app";
 import "reflect-metadata";
 
@@ -20,6 +21,10 @@ const startServer = async () => {
     // Ensure Event tables exist (raw SQL)
     await initEventTables();
     console.log("Event tables ensured");
+
+    // Seed categories
+    await seedCategories();
+    console.log("Categories seeded");
 
     // Start server
     app.listen(PORT, () => {

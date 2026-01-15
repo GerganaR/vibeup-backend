@@ -4,7 +4,7 @@ export interface EventResponseDTO {
   id: string;
   title: string;
   description?: string;
-  categories?: string[];
+  categories: { id: string; name: string }[];
   startDateTime: Date;
   endDateTime: Date;
   address: string;
@@ -24,7 +24,10 @@ export class EventResponseMapper {
       id: event.id,
       title: event.title,
       description: event.description,
-      categories: event.categories,
+      categories: event.categories.map((c) => ({
+        id: c.categoryId,
+        name: c.categoryName || "",
+      })),
       startDateTime: event.startDateTime,
       endDateTime: event.endDateTime,
       address: event.address,

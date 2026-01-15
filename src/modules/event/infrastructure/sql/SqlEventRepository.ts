@@ -15,6 +15,13 @@ export class SqlEventRepository implements IEventRepository {
     if (rows.length === 0) return null;
     const e: any = rows[0];
 
+    const categoryRows = await sequelize.query(
+      `SELECT c.id, c.name FROM event_categories ec
+      JOIN categories c ON ec.category_id = c.id
+      WHERE ec.event_id = $1`,
+      { bind: [id], type: QueryTypes.SELECT }
+    );
+
     const attendeeRows = await sequelize.query(
       `SELECT user_id FROM event_attendees WHERE event_id = $1`,
       { bind: [id], type: QueryTypes.SELECT }
@@ -25,11 +32,15 @@ export class SqlEventRepository implements IEventRepository {
       { bind: [id], type: QueryTypes.SELECT }
     );
 
-    return Event.reconstitute({
+    // Build event object as before
+    const event = Event.reconstitute({
       id: e.id,
       title: e.title,
       description: e.description,
-      categories: e.categories,
+      categories: (categoryRows as any[]).map((r) => ({
+        id: r.id,
+        name: r.name,
+      })),
       startDateTime: e.start_datetime,
       endDateTime: e.end_datetime,
       latitude: e.latitude,
@@ -42,6 +53,7 @@ export class SqlEventRepository implements IEventRepository {
       createdAt: e.created_at,
       updatedAt: e.updated_at,
     });
+    return event;
   }
 
   async findAll(): Promise<Event[]> {
@@ -65,7 +77,6 @@ export class SqlEventRepository implements IEventRepository {
         id: event.id,
         title: event.title,
         description: event.description,
-        categories: event.categories,
         startDateTime: event.startDateTime,
         endDateTime: event.endDateTime,
         address: event.address,
@@ -78,13 +89,12 @@ export class SqlEventRepository implements IEventRepository {
       await sequelize.query(
         `
         INSERT INTO events (
-          id, title, description, categories, start_datetime, end_datetime,
+          id, title, description, start_datetime, end_datetime,
           latitude, longitude, capacity, host_id, address 
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
         ON CONFLICT (id) DO UPDATE SET
           title = EXCLUDED.title,
           description = EXCLUDED.description,
-          categories = EXCLUDED.categories,
           start_datetime = EXCLUDED.start_datetime,
           end_datetime = EXCLUDED.end_datetime,
           latitude = EXCLUDED.latitude,
@@ -98,7 +108,6 @@ export class SqlEventRepository implements IEventRepository {
             data.id,
             data.title,
             data.description,
-            data.categories,
             data.startDateTime,
             data.endDateTime,
             data.latitude,
@@ -110,6 +119,26 @@ export class SqlEventRepository implements IEventRepository {
           transaction: t,
         }
       );
+
+      // Categories
+      const categoryChanges = event.getCategoryChanges();
+      for (const c of categoryChanges.new) {
+        await sequelize.query(
+          `INSERT INTO event_categories (event_id, category_id) VALUES ($1,$2)
+           ON CONFLICT DO NOTHING`,
+          { bind: [event.id, c.categoryId], transaction: t }
+        );
+      }
+      if (categoryChanges.removed.length > 0) {
+        await sequelize.query(
+          `DELETE FROM event_categories 
+           WHERE event_id = $1 AND category_id = ANY($2)`,
+          {
+            bind: [event.id, categoryChanges.removed.map((c) => c.categoryId)],
+            transaction: t,
+          }
+        );
+      }
 
       // Attendees
       const attendeeChanges = event.getAttendeeChanges();

@@ -1,7 +1,7 @@
 export interface CreateEventDTO {
   title: string;
   description?: string;
-  categories?: string[];
+  categoryIds?: string[];
   startDateTime: Date;
   endDateTime: Date;
   address: string;
@@ -14,7 +14,7 @@ export interface CreateEventDTO {
 export interface UpdateEventDTO {
   title?: string;
   description?: string;
-  categories?: string[];
+  categoryIds?: string[];
   address?: string;
   latitude?: number | null;
   longitude?: number | null;

@@ -1,5 +1,10 @@
 import { Event } from "../../domain/Event";
-import { EventAttendeeModel, EventCohostModel, EventModel } from "./models";
+import {
+  EventAttendeeModel,
+  EventCohostModel,
+  EventCategoryModel,
+  EventModel,
+} from "./models";
 
 export class EventMapper {
   /**
@@ -14,22 +19,25 @@ export class EventMapper {
    */
   static toDomain(eventModel: EventModel): Event {
     const attendees = (eventModel.attendees || []).map(
-      (a: EventAttendeeModel) => ({
-        userId: a.userId,
-        eventId: a.eventId,
-      })
+      (a: EventAttendeeModel) => a.userId
     );
 
-    const cohosts = (eventModel.cohosts || []).map((c: EventCohostModel) => ({
-      userId: c.userId,
-      eventId: c.eventId,
-    }));
+    const cohosts = (eventModel.cohosts || []).map(
+      (c: EventCohostModel) => c.userId
+    );
+
+    const categories = (eventModel.categories || []).map(
+      (c: EventCategoryModel) => ({
+        id: c.categoryId,
+        name: c.category?.name || "",
+      })
+    );
 
     return Event.reconstitute({
       id: eventModel.id,
       title: eventModel.title,
       description: eventModel.description || undefined,
-      categories: eventModel.categories || undefined,
+      categories: categories.length > 0 ? categories : undefined,
       startDateTime: eventModel.startDateTime,
       endDateTime: eventModel.endDateTime,
       address: eventModel.address,
@@ -58,7 +66,7 @@ export class EventMapper {
     id: string;
     title: string;
     description?: string;
-    categories?: string[];
+    categoryIds?: string[];
     startDateTime: Date;
     endDateTime: Date;
     address: string;
@@ -72,7 +80,7 @@ export class EventMapper {
       id: event.id,
       title: event.title,
       description: event.description,
-      categories: event.categories,
+      categoryIds: event.categoryIds,
       startDateTime: event.startDateTime,
       endDateTime: event.endDateTime,
       address: event.address,
