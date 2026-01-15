@@ -2,11 +2,18 @@ import { sequelize } from "./database";
 
 export async function initEventTables() {
   await sequelize.query(`
+    CREATE TABLE IF NOT EXISTS categories (
+      id UUID PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await sequelize.query(`
     CREATE TABLE IF NOT EXISTS events (
       id UUID PRIMARY KEY,
       title TEXT NOT NULL,
       description TEXT,
-      categories TEXT[],
       start_datetime TIMESTAMP NOT NULL,
       end_datetime   TIMESTAMP NOT NULL,
       address TEXT NOT NULL,
@@ -55,6 +62,20 @@ export async function initEventTables() {
   await sequelize.query(`
     CREATE INDEX IF NOT EXISTS idx_event_cohosts_user_id
     ON event_cohosts(user_id);
+  `);
+
+  await sequelize.query(`
+    CREATE TABLE IF NOT EXISTS event_categories (
+      event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+      category_id UUID NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (event_id, category_id)
+    );
+  `);
+
+  await sequelize.query(`
+    CREATE INDEX IF NOT EXISTS idx_event_categories_category_id
+    ON event_categories(category_id);
   `);
 
   console.log("✓ Event tables ensured");

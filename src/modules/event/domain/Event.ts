@@ -1,16 +1,18 @@
 import { EventCohost } from "./value-objects/EventCohost";
 import { EventAttendee } from "./value-objects/EventAttendee";
+import { EventCategory } from "./value-objects/EventCategory";
 import { Schedule } from "./value-objects/Schedule";
 import { Location } from "./value-objects/Location";
 import { EventCohostCollection } from "./collections/EventCohostCollection";
 import { EventAttendeeCollection } from "./collections/EventAttendeeCollection";
+import { EventCategoryCollection } from "./collections/EventCategoryCollection";
 
 export class Event {
   private constructor(
     public readonly id: string,
     private _title: string,
     private _description: string | undefined,
-    private _categories: string[] | undefined,
+    private _categories: EventCategoryCollection,
     private _schedule: Schedule,
     private _location: Location | undefined,
     private _address: string,
@@ -26,7 +28,7 @@ export class Event {
     id: string;
     title: string;
     description?: string;
-    categories?: string[];
+    categoryIds?: string[];
     startDateTime: Date;
     endDateTime: Date;
     address: string;
@@ -41,6 +43,13 @@ export class Event {
         ? Location.create(params.latitude, params.longitude)
         : undefined;
 
+    // Create empty collection and register categories as NEW (not clean)
+    // so they will be saved by the repository
+    const categories = new EventCategoryCollection();
+    for (const id of params.categoryIds || []) {
+      categories.registerNew(EventCategory.create(id));
+    }
+
     const cohosts = new EventCohostCollection();
     const attendees = new EventAttendeeCollection();
 
@@ -48,7 +57,7 @@ export class Event {
       params.id,
       params.title,
       params.description,
-      params.categories,
+      categories,
       schedule,
       location,
       params.address,
@@ -65,7 +74,7 @@ export class Event {
     id: string;
     title: string;
     description?: string;
-    categories?: string[];
+    categories?: { id: string; name: string }[];
     startDateTime: Date;
     endDateTime: Date;
     address: string;
@@ -84,6 +93,11 @@ export class Event {
         ? Location.create(params.latitude, params.longitude)
         : undefined;
 
+    const categoryVOs = (params.categories || []).map((cat) =>
+      EventCategory.create(cat.id, cat.name)
+    );
+    const categories = new EventCategoryCollection(categoryVOs);
+
     const cohostVOs = params.cohosts.map((userId) =>
       EventCohost.create(userId)
     );
@@ -98,7 +112,7 @@ export class Event {
       params.id,
       params.title,
       params.description,
-      params.categories,
+      categories,
       schedule,
       location,
       params.address,
@@ -119,8 +133,12 @@ export class Event {
     return this._description;
   }
 
-  get categories(): string[] | undefined {
-    return this._categories;
+  get categories(): EventCategory[] {
+    return Array.from(this._categories);
+  }
+
+  get categoryIds(): string[] {
+    return this.categories.map((c) => c.categoryId);
   }
 
   get startDateTime(): Date {
@@ -159,6 +177,16 @@ export class Event {
     return this._attendees.count();
   }
 
+  getCategoryChanges(): {
+    new: EventCategory[];
+    removed: EventCategory[];
+  } {
+    return {
+      new: this._categories.getNew(),
+      removed: this._categories.getRemoved(),
+    };
+  }
+
   getCohostChanges(): {
     new: EventCohost[];
     removed: EventCohost[];
@@ -182,7 +210,7 @@ export class Event {
   update(params: {
     title?: string;
     description?: string;
-    categories?: string[];
+    categoryIds?: string[];
     startDateTime?: Date;
     endDateTime?: Date;
     address?: string;
@@ -199,8 +227,8 @@ export class Event {
       this._description = params.description;
     }
 
-    if (params.categories !== undefined) {
-      this._categories = params.categories;
+    if (params.categoryIds !== undefined) {
+      this.updateCategories(params.categoryIds);
     }
 
     if (params.startDateTime && params.endDateTime) {
@@ -228,6 +256,25 @@ export class Event {
 
     if (params.cohostIds !== undefined) {
       this.updateCohosts(params.cohostIds);
+    }
+  }
+
+  private updateCategories(newCategoryIds: string[]): void {
+    // const categoryVOs = newCategoryIds.map((id) => EventCategory.create(id));
+
+    const currentIds = new Set(this.categoryIds);
+    const newIdsSet = new Set(newCategoryIds);
+
+    for (const existing of this.categories) {
+      if (!newIdsSet.has(existing.categoryId)) {
+        this._categories.registerRemoved(existing);
+      }
+    }
+
+    for (const categoryId of newCategoryIds) {
+      if (!currentIds.has(categoryId)) {
+        this._categories.registerNew(EventCategory.create(categoryId));
+      }
     }
   }
 

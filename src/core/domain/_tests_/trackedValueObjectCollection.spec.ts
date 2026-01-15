@@ -1,18 +1,18 @@
 import { TrackedValueObjectCollection } from "@/core/domain/trackValueObjectCollection";
-import { EventCohostVO } from "@/modules/event/eventCohost.vo";
+import { EventCohost } from "@/modules/event/domain/value-objects/EventCohost";
 
-class TestCohostCollection extends TrackedValueObjectCollection<EventCohostVO> {
+class TestCohostCollection extends TrackedValueObjectCollection<EventCohost> {
   protected getType() {
-    return EventCohostVO;
+    return EventCohost as unknown as new (...args: any[]) => EventCohost;
   }
-  protected getHash(vo: EventCohostVO) {
-    return `${vo.eventId}:${vo.userId}`;
+  protected getHash(vo: EventCohost) {
+    return vo.userId;
   }
 }
 
 describe("TrackedValueObjectCollection", () => {
-  const c1 = new EventCohostVO("u1", "e1");
-  const c2 = new EventCohostVO("u2", "e1");
+  const c1 = EventCohost.create("u1");
+  const c2 = EventCohost.create("u2");
 
   it("initializes clean + originalClean on constructor", () => {
     const col = new TestCohostCollection([c1, c2]);

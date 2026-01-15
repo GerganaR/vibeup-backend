@@ -7,3 +7,4 @@
 export { EventModel } from "./EventModel";
 export { EventAttendeeModel } from "./EventAttendeeModel";
 export { EventCohostModel } from "./EventCohostModel";
+export { EventCategoryModel } from "./EventCategoryModel";
