@@ -2,8 +2,10 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import { sequelize } from "./core/config/database";
-import { initEventTables } from "./core/config/initEventTables";
 import { seedCategories } from "./core/config/seeders/CategorySeeder";
+import { container } from "./core/di/container";
+import { TYPES } from "./core/di/types";
+import { MigrationClient } from "./core/infrastructure/persistence/MigrationClient";
 import app from "./app";
 import "reflect-metadata";
 
@@ -18,9 +20,12 @@ const startServer = async () => {
     await sequelize.sync({ alter: true });
     console.log("User models synced");
 
-    // Ensure Event tables exist (raw SQL)
-    await initEventTables();
-    console.log("Event tables ensured");
+    // Run Migrations
+    const migrationClient = container.get<MigrationClient>(
+      TYPES.MigrationClient
+    );
+    await migrationClient.runMigrations();
+    console.log("Migrations check completed");
 
     // Seed categories
     await seedCategories();

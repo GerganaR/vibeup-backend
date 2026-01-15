@@ -31,7 +31,8 @@ container
   .inSingletonScope();
 
 // Categories Service binding
-container.bind<CategoriesService>(TYPES.CategoriesService)
+container
+  .bind<CategoriesService>(TYPES.CategoriesService)
   .to(CategoriesService)
   .inSingletonScope();
 
@@ -42,7 +43,8 @@ container
   .inRequestScope();
 
 // Categories Controller binding
-container.bind<CategoriesController>(TYPES.CategoriesController)
+container
+  .bind<CategoriesController>(TYPES.CategoriesController)
   .to(CategoriesController)
   .inRequestScope();
 
@@ -51,6 +53,13 @@ import { EventCategoryValidator } from "@/modules/event/domain/services/EventCat
 container
   .bind<EventCategoryValidator>(TYPES.EventCategoryValidator)
   .to(EventCategoryValidator)
+  .inSingletonScope();
+
+// Migration Client
+import { MigrationClient } from "@/core/infrastructure/persistence/MigrationClient";
+container
+  .bind<MigrationClient>(TYPES.MigrationClient)
+  .to(MigrationClient)
   .inSingletonScope();
 
 export { container };

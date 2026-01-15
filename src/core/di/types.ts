@@ -6,6 +6,7 @@ const TYPES = {
   CategoriesService: Symbol.for("CategoriesService"),
   CategoriesController: Symbol.for("CategoriesController"),
   EventCategoryValidator: Symbol.for("EventCategoryValidator"),
+  MigrationClient: Symbol.for("MigrationClient"),
 };
 
 export { TYPES };
