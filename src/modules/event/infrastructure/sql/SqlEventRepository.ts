@@ -205,4 +205,88 @@ export class SqlEventRepository implements IEventRepository {
       bind: [id],
     });
   }
+
+  async countUpcoming(): Promise<number> {
+    const result = await sequelize.query(
+      `SELECT COUNT(*) as count FROM events WHERE start_datetime > NOW()`,
+      { type: QueryTypes.SELECT }
+    );
+    return parseInt((result[0] as any).count, 10);
+  }
+
+  async countAttending(userId: string): Promise<number> {
+    const result = await sequelize.query(
+      `SELECT COUNT(*) as count 
+       FROM events e
+       JOIN event_attendees ea ON e.id = ea.event_id
+       WHERE ea.user_id = $1 AND e.start_datetime > NOW()`,
+      { bind: [userId], type: QueryTypes.SELECT }
+    );
+    return parseInt((result[0] as any).count, 10);
+  }
+
+  async countHosted(userId: string): Promise<number> {
+    const result = await sequelize.query(
+      `SELECT COUNT(*) as count 
+       FROM events e
+       WHERE host_id = $1 AND e.start_datetime > NOW()`,
+      { bind: [userId], type: QueryTypes.SELECT }
+    );
+    return parseInt((result[0] as any).count, 10);
+  }
+
+  async findAttending(userId: string, categoryId?: string): Promise<Event[]> {
+    let query = `
+      SELECT e.id 
+      FROM events e
+      JOIN event_attendees ea ON e.id = ea.event_id
+      ${
+        categoryId && categoryId !== "All"
+          ? "JOIN event_categories ec ON e.id = ec.event_id"
+          : ""
+      }
+      WHERE ea.user_id = $1 AND e.start_datetime > NOW()
+      ${categoryId && categoryId !== "All" ? "AND ec.category_id = $2" : ""}
+      ORDER BY e.start_datetime ASC
+    `;
+
+    const bind = [userId];
+    if (categoryId && categoryId !== "All") bind.push(categoryId);
+
+    const ids = await sequelize.query(query, { bind, type: QueryTypes.SELECT });
+
+    const events: Event[] = [];
+    for (const row of ids as any[]) {
+      const event = await this.findById(row.id);
+      if (event) events.push(event);
+    }
+    return events;
+  }
+
+  async findHosted(userId: string, categoryId?: string): Promise<Event[]> {
+    let query = `
+      SELECT e.id 
+      FROM events e
+      ${
+        categoryId && categoryId !== "All"
+          ? "JOIN event_categories ec ON e.id = ec.event_id"
+          : ""
+      }
+      WHERE e.host_id = $1 AND e.start_datetime > NOW()
+      ${categoryId && categoryId !== "All" ? "AND ec.category_id = $2" : ""}
+      ORDER BY e.start_datetime ASC
+    `;
+
+    const bind = [userId];
+    if (categoryId && categoryId !== "All") bind.push(categoryId);
+
+    const ids = await sequelize.query(query, { bind, type: QueryTypes.SELECT });
+
+    const events: Event[] = [];
+    for (const row of ids as any[]) {
+      const event = await this.findById(row.id);
+      if (event) events.push(event);
+    }
+    return events;
+  }
 }

@@ -3,12 +3,15 @@ import { injectable, inject } from "inversify";
 import { TYPES } from "@/core/di/types";
 import { EventApplicationService } from "../application/EventApplicationService";
 import { EventResponseMapper } from "../application/EventResponseDTO";
+import { DashboardApplicationService } from "../application/DashboardApplicationService";
 
 @injectable()
 export class EventController {
   constructor(
     @inject(TYPES.EventApplicationService)
-    private readonly eventApplicationService: EventApplicationService
+    private readonly eventApplicationService: EventApplicationService,
+    @inject(TYPES.DashboardApplicationService)
+    private readonly dashboardApplicationService: DashboardApplicationService
   ) {}
 
   async getAll(_req: Request, res: Response) {
@@ -25,7 +28,10 @@ export class EventController {
 
   async create(req: Request, res: Response) {
     const user = req.authenticatedUser!;
-    const event = await this.eventApplicationService.createEvent(req.body, user.id);
+    const event = await this.eventApplicationService.createEvent(
+      req.body,
+      user.id
+    );
     res.status(201).json(EventResponseMapper.toDTO(event));
   }
 
@@ -47,7 +53,10 @@ export class EventController {
 
   async rsvp(req: Request, res: Response) {
     const user = req.authenticatedUser!;
-    const event = await this.eventApplicationService.rsvp(req.params.id, user.id);
+    const event = await this.eventApplicationService.rsvp(
+      req.params.id,
+      user.id
+    );
     res.json(EventResponseMapper.toDTO(event));
   }
 
@@ -58,5 +67,31 @@ export class EventController {
       user.id
     );
     res.json(EventResponseMapper.toDTO(event));
+  }
+
+  async getStats(req: Request, res: Response) {
+    const userId = req.authenticatedUser!.id;
+    const stats = await this.dashboardApplicationService.getStats(userId);
+    res.json(stats);
+  }
+
+  async getAttending(req: Request, res: Response) {
+    const userId = req.authenticatedUser!.id;
+    const categoryId = req.query.categoryId as string | undefined;
+    const events = await this.dashboardApplicationService.getAttendingEvents(
+      userId,
+      categoryId
+    );
+    res.json(EventResponseMapper.toDTOArray(events));
+  }
+
+  async getHosted(req: Request, res: Response) {
+    const userId = req.authenticatedUser!.id;
+    const categoryId = req.query.categoryId as string | undefined;
+    const events = await this.dashboardApplicationService.getHostedEvents(
+      userId,
+      categoryId
+    );
+    res.json(EventResponseMapper.toDTOArray(events));
   }
 }

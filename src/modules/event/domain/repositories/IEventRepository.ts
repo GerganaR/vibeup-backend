@@ -5,5 +5,9 @@ export interface IEventRepository {
   findAll(): Promise<Event[]>;
   save(event: Event): Promise<void>;
   delete(id: string): Promise<void>;
+  countUpcoming(): Promise<number>;
+  countAttending(userId: string): Promise<number>;
+  countHosted(userId: string): Promise<number>;
+  findAttending(userId: string, category?: string): Promise<Event[]>;
+  findHosted(userId: string, category?: string): Promise<Event[]>;
 }
-

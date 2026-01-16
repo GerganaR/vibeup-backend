@@ -13,6 +13,17 @@ const controller = wrapController(
 );
 
 // Routes
+// Dashboard Routes (must come before /:id)
+router.get("/stats", verifyGoogleToken, resolveUser, controller.getStats);
+router.get(
+  "/attending",
+  verifyGoogleToken,
+  resolveUser,
+  controller.getAttending
+);
+router.get("/hosted", verifyGoogleToken, resolveUser, controller.getHosted);
+
+// Generic Routes
 router.get("/", controller.getAll);
 router.get("/:id", controller.getById);
 

@@ -62,4 +62,12 @@ container
   .to(MigrationClient)
   .inSingletonScope();
 
+// Dashboard bindings
+import { DashboardApplicationService } from "@/modules/event/application/DashboardApplicationService";
+
+container
+  .bind<DashboardApplicationService>(TYPES.DashboardApplicationService)
+  .to(DashboardApplicationService)
+  .inSingletonScope();
+
 export { container };

@@ -205,4 +205,20 @@ export class EventRepository implements IEventRepository {
       });
     }
   }
+
+  async countUpcoming(): Promise<number> {
+    throw new Error("Method not implemented.");
+  }
+  async countAttending(userId: string): Promise<number> {
+    throw new Error("Method not implemented.");
+  }
+  async countHosted(userId: string): Promise<number> {
+    throw new Error("Method not implemented.");
+  }
+  async findAttending(userId: string, category?: string): Promise<Event[]> {
+    throw new Error("Method not implemented.");
+  }
+  async findHosted(userId: string, category?: string): Promise<Event[]> {
+    throw new Error("Method not implemented.");
+  }
 }
