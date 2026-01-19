@@ -6,8 +6,8 @@ import { EventCohostModel } from "./models/EventCohostModel";
 import { EventMapper } from "./EventMapper";
 import { sequelize } from "@/core/config/database";
 import { Transaction } from "sequelize";
-import { UserIdentity } from "@/modules/user/user.entity";
-import { UserProfile } from "@/modules/user/userProfile.entity";
+import { UserIdentity } from "@/modules/user/infrastructure/models/UserIdentity.model";
+import { UserProfile } from "@/modules/user/infrastructure/models/UserProfile.model";
 
 /**
  * EventRepository - Infrastructure implementation of IEventRepository
@@ -209,16 +209,16 @@ export class EventRepository implements IEventRepository {
   async countUpcoming(): Promise<number> {
     throw new Error("Method not implemented.");
   }
-  async countAttending(userId: string): Promise<number> {
+  async countAttending(_userId: string): Promise<number> {
     throw new Error("Method not implemented.");
   }
-  async countHosted(userId: string): Promise<number> {
+  async countHosted(_userId: string): Promise<number> {
     throw new Error("Method not implemented.");
   }
-  async findAttending(userId: string, category?: string): Promise<Event[]> {
+  async findAttending(_userId: string, _category?: string): Promise<Event[]> {
     throw new Error("Method not implemented.");
   }
-  async findHosted(userId: string, category?: string): Promise<Event[]> {
+  async findHosted(_userId: string, _category?: string): Promise<Event[]> {
     throw new Error("Method not implemented.");
   }
 }

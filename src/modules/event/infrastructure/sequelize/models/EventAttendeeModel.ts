@@ -9,7 +9,7 @@ import {
   Table,
 } from "sequelize-typescript";
 import { v4 as uuidv4 } from "uuid";
-import { UserIdentity } from "@/modules/user/user.entity";
+import { UserIdentity } from "@/modules/user/infrastructure/models/UserIdentity.model";
 import { EventModel } from "./EventModel";
 
 @Table({
