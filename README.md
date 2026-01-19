@@ -1,147 +1,119 @@
-# VibeUp Backend
+# VibeUp Backend Services
 
-Backend API for VibeUp app built with Express.js and PostgreSQL.
+A robust, scalable REST API powering the VibeUp platform. Built with **Node.js**, **Express**, and **TypeScript** using **Domain-Driven Design (DDD)** principles.
 
-## Tech Stack
+---
 
-- **Node.js** - JavaScript runtime
-- **Express.js** - Web framework
-- **PostgreSQL** - Database
-- **pg** - PostgreSQL client for Node.js
+## 🚀 Project Overview
 
-## Project Structure
+**VibeUp** is an event discovery and social engagement platform. The backend is designed to handle complex business rules around event scheduling, user identities, and geographical data while maintaining high maintainability and testability.
 
-```
-vibeup-backend/
-├── src/
-│   ├── config/          # Configuration files (database, etc.)
-│   ├── controllers/     # Route controllers
-│   ├── middleware/      # Custom middleware
-│   ├── models/          # Database models
-│   ├── routes/          # API routes
-│   ├── utils/           # Utility functions
-│   └── server.js        # Main server file
-├── database/
-│   └── init.sql         # Database initialization script
-├── .env.example         # Example environment variables
-├── .gitignore
-└── package.json
-```
+### Key Capabilities
 
-## Setup Instructions
+- **Authentication**: Secure Google OAuth integration with JWT session management.
+- **Event Management**: Create, update, searching and RSVP to events.
+- **Geospatial Features**: Radius-based event lookup using PostgreSQL/Sequelize.
+- **Scalable Architecture**: Strict separation of concerns to allow independent scaling of modules.
 
-### 1. Install Dependencies
+---
 
-```bash
-npm install
-```
+## 🛠️ Architecture Evolution
 
-### 2. Configure Environment Variables
+The backend architecture has evolved to meet increasing complexity requirements. This journey demonstrates a pragmatic approach to software design, starting simple and refactoring for scale.
 
-Copy `.env.example` to `.env` and update with your configuration:
+### Phase 1: The "Simple MVC" Approach (MVP)
 
-```bash
-cp .env.example .env
-```
+_Goal: Rapid Development & Prototyping_
 
-Edit `.env` with your PostgreSQL credentials:
+Initially, the project followed a traditional **Model-View-Controller (MVC)** pattern.
 
-```env
-PORT=5000
-NODE_ENV=development
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=vibeup_db
-DB_USER=postgres
-DB_PASSWORD=your_password_here
-CORS_ORIGIN=http://localhost:3000
-```
+- **Structure**:
+  - `controllers/`: Handled HTTP requests and business logic.
+  - `services/`: Contained some business logic but often mixed with database queries.
+  - `models/`: Direct Sequelize models used everywhere.
+- **Pros**: Fast to set up, easy to understand for small features.
+- **Cons**: As the `User` and `Event` domains grew, controllers became bloated ("Fat Controllers"), and business rules were scattered across services and UI layers.
 
-### 3. Set Up PostgreSQL Database
+### Phase 2: Refactoring to Domain-Driven Design (DDD)
 
-Make sure PostgreSQL is installed and running, then create the database:
+_Goal: maintainability, Testability & Separation of Concerns_
 
-```bash
-# Connect to PostgreSQL
-psql -U postgres
+As the application matured, we transitioned to a **Clean Architecture / DDD** approach. This ensures that business rules are independent of external frameworks (like Express or Sequelize).
 
-# Create database
-CREATE DATABASE vibeup_db;
+#### Current Structure Map
 
-# Exit PostgreSQL
-\q
+The module structure (e.g., `src/modules/user/`) is now strictly layered:
 
-# Run initialization script
-psql -U postgres -d vibeup_db -f database/init.sql
-```
+1.  **Domain Layer** (`/domain`)
 
-### 4. Start the Server
+    - _The Core_. Contains business entities and logic purely in TypeScript.
+    - **Entities**: `UserAggregate.ts` (Rich domain model, distinct from DB tables).
+    - **Rules**: Invariants and validation happen here.
+    - **No Dependencies**: Does not know about specific databases or controllers.
 
-**Development mode (with auto-restart):**
-```bash
-npm run dev
-```
+2.  **Application Layer** (`/application`)
 
-**Production mode:**
-```bash
-npm start
-```
+    - _The Orchestrator_. Handles specific use cases.
+    - **Services**: `UserApplicationService.ts`. Coordinates Domain objects and Repositories.
+    - **DTOs**: Defines how data enters/exits the system, decoupling internal models from API responses.
 
-The server will start on `http://localhost:5000` (or the PORT you specified in `.env`).
+3.  **Infrastructure Layer** (`/infrastructure`)
 
-## API Endpoints
+    - _The Plumbing_. Connects to the outside world.
+    - **Repositories**: `UserRepository.ts`. Implements Domain interfaces using Sequelize.
+    - **Models**: `models/UserIdentity.model.ts`. Actual Database schemas (Sequelize).
+    - **Mappers**: `UserMapper.ts`. Translates between DB Models <-> Domain Entities.
 
-### Health Checks
+4.  **Presentation / UI Layer** (`/ui`)
+    - _The Interface_.
+    - **Controllers**: `user.controller.ts`. Minimal logic, just parses HTTP and calls Application Services.
+    - **Routes**: `user.routes.ts`. Defines API endpoints.
 
-- `GET /health` - Server health check
-- `GET /health/db` - Database connection health check
-- `GET /api` - API welcome message
+---
 
-### Available Routes
+## 💻 Tech Stack
 
-(Add your routes here as you develop them)
+- **Runtime**: Node.js
+- **Language**: TypeScript (Strict mode)
+- **Framework**: Express.js
+- **Database**: PostgreSQL
+- **ORM**: Sequelize (TypeScript)
+- **Validation**: Joi / Domain-level validation
+- **Testing**: Jest (Unit & Integration)
 
-## Development
+## 📦 Getting Started
 
-### Adding New Routes
+### Prerequisites
 
-1. Create a route file in `src/routes/`
-2. Create corresponding controller in `src/controllers/`
-3. Import and use in `src/server.js`
+- Node.js v18+
+- PostgreSQL
+- Google Cloud Console Project (for OAuth)
 
-Example:
+### Installation
 
-```javascript
-// src/routes/userRoutes.js
-const express = require('express');
-const router = express.Router();
-const userController = require('../controllers/userController');
+1.  **Clone & Install**
 
-router.get('/', userController.getAllUsers);
-router.post('/', userController.createUser);
+    ```bash
+    git clone params...
+    npm install
+    ```
 
-module.exports = router;
-```
+2.  **Environment Setup**
+    Create `.env`:
 
-```javascript
-// In src/server.js
-const userRoutes = require('./routes/userRoutes');
-app.use('/api/users', userRoutes);
-```
+    ```env
+    PORT=5000
+    DB_HOST=localhost
+    DB_NAME=vibeup_db
+    JWT_SECRET=your_jwt_secret
+    GOOGLE_CLIENT_ID=your_google_client_id
+    ```
 
-## Security Features
+3.  **Run Development Server**
+    ```bash
+    npm run dev
+    ```
 
-- **Helmet** - Sets security-related HTTP headers
-- **CORS** - Configured for your React frontend
-- **Environment Variables** - Sensitive data in `.env` file
+---
 
-## Contributing
-
-1. Create a feature branch
-2. Make your changes
-3. Test thoroughly
-4. Submit a pull request
-
-## License
-
-ISC
+_This architecture allows VibeUp to scale its complexity without accumulating technical debt, providing a solid foundation for future features like real-time chat and payment processing._
