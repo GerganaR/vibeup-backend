@@ -1,5 +1,5 @@
 import { Router } from "express";
-import userRoutes from "@/modules/user/user.routes";
+import userRoutes from "@/modules/user/ui/user.routes";
 import eventRoutes from "@/modules/event/ui/event.routes";
 import categoriesRoutes from "@/modules/category/ui/categories.routes";
 

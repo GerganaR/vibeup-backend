@@ -1,6 +1,6 @@
 import { Sequelize } from "sequelize-typescript";
-import { UserProfile } from "@/modules/user/userProfile.entity";
-import { UserIdentity } from "@/modules/user/userIdentity.entity";
+import { UserProfile } from "@/modules/user/infrastructure/models/UserProfile.model";
+import { UserIdentity } from "@/modules/user/infrastructure/models/UserIdentity.model";
 
 // Legacy Event Models - Migrated to Raw SQL
 // import { EventModel } from "@/modules/event/infrastructure/models/EventModel";

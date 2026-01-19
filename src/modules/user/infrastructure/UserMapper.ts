@@ -1,5 +1,5 @@
 import { UserAggregate } from "../domain/UserAggregate";
-import { UserIdentity } from "../userIdentity.entity";
+import { UserIdentity } from "./models/UserIdentity.model";
 
 export class UserMapper {
   static toDomain(userModel: UserIdentity): UserAggregate {
@@ -39,4 +39,3 @@ export class UserMapper {
     };
   }
 }
-

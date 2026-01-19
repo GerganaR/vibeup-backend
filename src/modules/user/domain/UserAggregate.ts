@@ -1,10 +1,6 @@
 import { Email } from "./value-objects/Email";
-import { UserCreated } from "./domain-events/UserCreated";
-import { DomainEvent } from "@/core/domain/DomainEvent";
 
 export class UserAggregate {
-  private domainEvents: DomainEvent[] = [];
-
   private constructor(
     public readonly id: string,
     public readonly googleId: string,
@@ -35,8 +31,6 @@ export class UserAggregate {
       new Date(),
       new Date()
     );
-
-    user.addDomainEvent(new UserCreated(user.id, user.googleId));
 
     return user;
   }
@@ -103,17 +97,4 @@ export class UserAggregate {
       this._locale = params.locale;
     }
   }
-
-  private addDomainEvent(event: DomainEvent): void {
-    this.domainEvents.push(event);
-  }
-
-  getDomainEvents(): DomainEvent[] {
-    return [...this.domainEvents];
-  }
-
-  clearDomainEvents(): void {
-    this.domainEvents = [];
-  }
 }
-

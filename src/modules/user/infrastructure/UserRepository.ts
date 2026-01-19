@@ -1,7 +1,7 @@
 import { IUserRepository } from "../domain/repositories/IUserRepository";
 import { UserAggregate } from "../domain/UserAggregate";
-import { UserIdentity } from "../userIdentity.entity";
-import { UserProfile } from "../userProfile.entity";
+import { UserIdentity } from "./models/UserIdentity.model";
+import { UserProfile } from "./models/UserProfile.model";
 import { UserMapper } from "./UserMapper";
 import { sequelize } from "@/core/config/database";
 import { Transaction } from "sequelize";
@@ -93,4 +93,3 @@ export class UserRepository implements IUserRepository {
     });
   }
 }
-

@@ -9,7 +9,7 @@ import {
   HasOne,
 } from "sequelize-typescript";
 import { v4 as uuidv4 } from "uuid";
-import { UserProfile } from "./userProfile.entity";
+import { UserProfile } from "./UserProfile.model";
 
 @Table({ tableName: "user_identities", timestamps: true })
 export class UserIdentity extends Model {
