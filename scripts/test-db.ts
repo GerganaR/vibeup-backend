@@ -3,13 +3,20 @@ import { Pool, PoolClient } from "pg";
 
 dotenv.config();
 
-const pool = new Pool({
-  host: process.env.DB_HOST || "localhost",
-  port: parseInt(process.env.DB_PORT || "5432", 10),
-  database: process.env.DB_NAME || "vibeup_db",
-  user: process.env.DB_USER || "postgres",
-  password: process.env.DB_PASSWORD,
-});
+const pool = process.env.DATABASE_URL
+  ? new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: {
+        rejectUnauthorized: false,
+      },
+    })
+  : new Pool({
+      host: process.env.DB_HOST || "localhost",
+      port: parseInt(process.env.DB_PORT || "5432", 10),
+      database: process.env.DB_NAME || "vibeup_db",
+      user: process.env.DB_USER || "postgres",
+      password: process.env.DB_PASSWORD,
+    });
 
 interface ErrorWithCode extends Error {
   code?: string;
@@ -18,10 +25,14 @@ interface ErrorWithCode extends Error {
 async function testConnection(): Promise<void> {
   console.log("🔍 Testing database connection...\n");
   console.log("Configuration:");
-  console.log(`  Host: ${process.env.DB_HOST || "localhost"}`);
-  console.log(`  Port: ${process.env.DB_PORT || 5432}`);
-  console.log(`  Database: ${process.env.DB_NAME || "vibeup_db"}`);
-  console.log(`  User: ${process.env.DB_USER || "postgres"}\n`);
+  if (process.env.DATABASE_URL) {
+    console.log("  Using DATABASE_URL connection string");
+  } else {
+    console.log(`  Host: ${process.env.DB_HOST || "localhost"}`);
+    console.log(`  Port: ${process.env.DB_PORT || 5432}`);
+    console.log(`  Database: ${process.env.DB_NAME || "vibeup_db"}`);
+    console.log(`  User: ${process.env.DB_USER || "postgres"}\n`);
+  }
 
   try {
     // Test connection
@@ -79,7 +90,3 @@ async function testConnection(): Promise<void> {
 }
 
 testConnection();
-
-
-
-
