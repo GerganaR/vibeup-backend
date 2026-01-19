@@ -35,6 +35,13 @@ export class SqlEventRepository implements IEventRepository {
       { bind: [id], type: QueryTypes.SELECT }
     );
 
+    // Fetch host user info
+    const hostRows = await sequelize.query(
+      `SELECT id, name, "avatarUrl" FROM user_profiles WHERE id = $1`,
+      { bind: [e.host_id], type: QueryTypes.SELECT }
+    );
+    const hostInfo = hostRows.length > 0 ? (hostRows[0] as any) : null;
+
     // Build event object as before
     const event = Event.reconstitute({
       id: e.id,
@@ -50,6 +57,13 @@ export class SqlEventRepository implements IEventRepository {
       longitude: e.longitude,
       capacity: e.capacity,
       hostId: e.host_id,
+      host: hostInfo
+        ? {
+            id: hostInfo.id,
+            name: hostInfo.name || "Unknown",
+            avatarUrl: hostInfo.avatarUrl,
+          }
+        : undefined,
       attendees: (attendeeRows as any[]).map((r) => ({
         id: r.user_id,
         name: r.name || "Unknown",

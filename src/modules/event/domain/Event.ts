@@ -8,6 +8,8 @@ import { EventAttendeeCollection } from "./collections/EventAttendeeCollection";
 import { EventCategoryCollection } from "./collections/EventCategoryCollection";
 
 export class Event {
+  private _host?: { id: string; name: string; avatarUrl?: string };
+
   private constructor(
     public readonly id: string,
     private _title: string,
@@ -82,6 +84,7 @@ export class Event {
     longitude?: number;
     capacity?: number;
     hostId: string;
+    host?: { id: string; name: string; avatarUrl?: string };
     cohosts: string[];
     attendees: { id: string; name: string; avatarUrl?: string }[];
     createdAt: Date;
@@ -108,7 +111,7 @@ export class Event {
     const cohosts = new EventCohostCollection(cohostVOs);
     const attendees = new EventAttendeeCollection(attendeeVOs);
 
-    return new Event(
+    const event = new Event(
       params.id,
       params.title,
       params.description,
@@ -123,6 +126,10 @@ export class Event {
       params.createdAt,
       params.updatedAt
     );
+    if (params.host) {
+      event._host = params.host;
+    }
+    return event;
   }
 
   get title(): string {
@@ -163,6 +170,10 @@ export class Event {
 
   get capacity(): number | undefined {
     return this._capacity;
+  }
+
+  get host(): { id: string; name: string; avatarUrl?: string } | undefined {
+    return this._host;
   }
 
   get cohosts(): EventCohost[] {
@@ -338,7 +349,7 @@ export class Event {
     const isAttending = Array.from(this._attendees).some(
       (a) => a.userId === userId
     );
-    
+
     if (isAttending) {
       throw new Error("User is already attending this event.");
     }
