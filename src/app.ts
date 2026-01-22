@@ -5,6 +5,7 @@ import morgan from "morgan";
 import "./core/types/express";
 import { errorHandler } from "./core/errors/errorHandler.middleware";
 import { correlationId } from "./core/middleware/correlationId.middleware";
+import healthRouter from "./core/routes/health.route";
 import routes from "./core/routes";
 
 const app: Application = express();
@@ -19,6 +20,9 @@ app.use(
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use(healthRouter);
+
 app.use(correlationId);
 
 app.use(routes);
