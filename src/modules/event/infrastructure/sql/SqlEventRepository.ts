@@ -4,91 +4,271 @@ import { sequelize } from "@/core/config/database";
 import { QueryTypes } from "sequelize";
 import { injectable } from "inversify";
 
+interface EventRow {
+  id: string;
+  title: string;
+  description: string | null;
+  start_datetime: Date;
+  end_datetime: Date;
+  address: string;
+  latitude: number | null;
+  longitude: number | null;
+  capacity: number | null;
+  host_id: string;
+  created_at: Date;
+  updated_at: Date;
+  // Aggregated JSON fields
+  categories_json: string | null;
+  attendees_json: string | null;
+  cohosts_json: string | null;
+  host_name: string | null;
+  host_avatar: string | null;
+}
+
 @injectable()
 export class SqlEventRepository implements IEventRepository {
+  /**
+   * Optimized findAll using a single query with JSON aggregation
+   * This eliminates the N+1 problem by fetching all data in one round-trip
+   */
+  async findAll(): Promise<Event[]> {
+    const query = `
+      SELECT 
+        e.*,
+        -- Host info
+        up.name as host_name,
+        up."avatarUrl" as host_avatar,
+        -- Categories as JSON array
+        COALESCE(
+          (SELECT json_agg(json_build_object('id', c.id, 'name', c.name))
+           FROM event_categories ec
+           JOIN categories c ON ec.category_id = c.id
+           WHERE ec.event_id = e.id),
+          '[]'
+        ) as categories_json,
+        -- Attendees as JSON array  
+        COALESCE(
+          (SELECT json_agg(json_build_object(
+            'id', ea.user_id, 
+            'name', COALESCE(aup.name, 'Unknown'),
+            'avatarUrl', aup."avatarUrl"
+          ))
+           FROM event_attendees ea
+           LEFT JOIN user_profiles aup ON ea.user_id = aup.id
+           WHERE ea.event_id = e.id),
+          '[]'
+        ) as attendees_json,
+        -- Cohosts as JSON array
+        COALESCE(
+          (SELECT json_agg(ec.user_id)
+           FROM event_cohosts ec
+           WHERE ec.event_id = e.id),
+          '[]'
+        ) as cohosts_json
+      FROM events e
+      LEFT JOIN user_profiles up ON e.host_id = up.id
+      ORDER BY e.start_datetime ASC
+    `;
+
+    const rows = await sequelize.query<EventRow>(query, {
+      type: QueryTypes.SELECT,
+    });
+
+    return rows.map((row) => this.mapRowToEvent(row));
+  }
+
   async findById(id: string): Promise<Event | null> {
-    const rows = await sequelize.query(`SELECT * FROM events WHERE id = $1`, {
+    const query = `
+      SELECT 
+        e.*,
+        -- Host info
+        up.name as host_name,
+        up."avatarUrl" as host_avatar,
+        -- Categories as JSON array
+        COALESCE(
+          (SELECT json_agg(json_build_object('id', c.id, 'name', c.name))
+           FROM event_categories ec
+           JOIN categories c ON ec.category_id = c.id
+           WHERE ec.event_id = e.id),
+          '[]'
+        ) as categories_json,
+        -- Attendees as JSON array  
+        COALESCE(
+          (SELECT json_agg(json_build_object(
+            'id', ea.user_id, 
+            'name', COALESCE(aup.name, 'Unknown'),
+            'avatarUrl', aup."avatarUrl"
+          ))
+           FROM event_attendees ea
+           LEFT JOIN user_profiles aup ON ea.user_id = aup.id
+           WHERE ea.event_id = e.id),
+          '[]'
+        ) as attendees_json,
+        -- Cohosts as JSON array
+        COALESCE(
+          (SELECT json_agg(ec.user_id)
+           FROM event_cohosts ec
+           WHERE ec.event_id = e.id),
+          '[]'
+        ) as cohosts_json
+      FROM events e
+      LEFT JOIN user_profiles up ON e.host_id = up.id
+      WHERE e.id = $1
+    `;
+
+    const rows = await sequelize.query<EventRow>(query, {
       bind: [id],
       type: QueryTypes.SELECT,
     });
 
     if (rows.length === 0) return null;
-    const e: any = rows[0];
-
-    const categoryRows = await sequelize.query(
-      `SELECT c.id, c.name FROM event_categories ec
-      JOIN categories c ON ec.category_id = c.id
-      WHERE ec.event_id = $1`,
-      { bind: [id], type: QueryTypes.SELECT }
-    );
-
-    const attendeeRows = await sequelize.query(
-      `SELECT ea.user_id, up.name, up."avatarUrl" 
-       FROM event_attendees ea
-       LEFT JOIN user_profiles up ON ea.user_id = up.id
-       WHERE ea.event_id = $1`,
-      { bind: [id], type: QueryTypes.SELECT }
-    );
-
-    const cohostRows = await sequelize.query(
-      `SELECT user_id FROM event_cohosts WHERE event_id = $1`,
-      { bind: [id], type: QueryTypes.SELECT }
-    );
-
-    // Fetch host user info
-    const hostRows = await sequelize.query(
-      `SELECT id, name, "avatarUrl" FROM user_profiles WHERE id = $1`,
-      { bind: [e.host_id], type: QueryTypes.SELECT }
-    );
-    const hostInfo = hostRows.length > 0 ? (hostRows[0] as any) : null;
-
-    // Build event object as before
-    const event = Event.reconstitute({
-      id: e.id,
-      title: e.title,
-      description: e.description,
-      categories: (categoryRows as any[]).map((r) => ({
-        id: r.id,
-        name: r.name,
-      })),
-      startDateTime: e.start_datetime,
-      endDateTime: e.end_datetime,
-      latitude: e.latitude,
-      longitude: e.longitude,
-      capacity: e.capacity,
-      hostId: e.host_id,
-      host: hostInfo
-        ? {
-            id: hostInfo.id,
-            name: hostInfo.name || "Unknown",
-            avatarUrl: hostInfo.avatarUrl,
-          }
-        : undefined,
-      attendees: (attendeeRows as any[]).map((r) => ({
-        id: r.user_id,
-        name: r.name || "Unknown",
-        avatarUrl: r.avatarUrl,
-      })),
-      cohosts: (cohostRows as any[]).map((r) => r.user_id),
-      address: e.address,
-      createdAt: e.created_at,
-      updatedAt: e.updated_at,
-    });
-    return event;
+    return this.mapRowToEvent(rows[0]);
   }
 
-  async findAll(): Promise<Event[]> {
-    const ids = await sequelize.query(
-      `SELECT id FROM events ORDER BY start_datetime ASC`,
-      { type: QueryTypes.SELECT }
-    );
+  async findAttending(userId: string, categoryId?: string): Promise<Event[]> {
+    const hasCategoryFilter = categoryId && categoryId !== "All";
 
-    const events: Event[] = [];
-    for (const row of ids as any[]) {
-      const event = await this.findById(row.id);
-      if (event) events.push(event);
-    }
-    return events;
+    const query = `
+      SELECT 
+        e.*,
+        up.name as host_name,
+        up."avatarUrl" as host_avatar,
+        COALESCE(
+          (SELECT json_agg(json_build_object('id', c.id, 'name', c.name))
+           FROM event_categories ec
+           JOIN categories c ON ec.category_id = c.id
+           WHERE ec.event_id = e.id),
+          '[]'
+        ) as categories_json,
+        COALESCE(
+          (SELECT json_agg(json_build_object(
+            'id', ea2.user_id, 
+            'name', COALESCE(aup.name, 'Unknown'),
+            'avatarUrl', aup."avatarUrl"
+          ))
+           FROM event_attendees ea2
+           LEFT JOIN user_profiles aup ON ea2.user_id = aup.id
+           WHERE ea2.event_id = e.id),
+          '[]'
+        ) as attendees_json,
+        COALESCE(
+          (SELECT json_agg(ec2.user_id)
+           FROM event_cohosts ec2
+           WHERE ec2.event_id = e.id),
+          '[]'
+        ) as cohosts_json
+      FROM events e
+      JOIN event_attendees ea ON e.id = ea.event_id
+      LEFT JOIN user_profiles up ON e.host_id = up.id
+      ${hasCategoryFilter ? "JOIN event_categories ecat ON e.id = ecat.event_id" : ""}
+      WHERE ea.user_id = $1 AND e.start_datetime > NOW()
+      ${hasCategoryFilter ? "AND ecat.category_id = $2" : ""}
+      ORDER BY e.start_datetime ASC
+    `;
+
+    const bind = hasCategoryFilter ? [userId, categoryId] : [userId];
+
+    const rows = await sequelize.query<EventRow>(query, {
+      bind,
+      type: QueryTypes.SELECT,
+    });
+
+    return rows.map((row) => this.mapRowToEvent(row));
+  }
+
+  async findHosted(userId: string, categoryId?: string): Promise<Event[]> {
+    const hasCategoryFilter = categoryId && categoryId !== "All";
+
+    const query = `
+      SELECT 
+        e.*,
+        up.name as host_name,
+        up."avatarUrl" as host_avatar,
+        COALESCE(
+          (SELECT json_agg(json_build_object('id', c.id, 'name', c.name))
+           FROM event_categories ec
+           JOIN categories c ON ec.category_id = c.id
+           WHERE ec.event_id = e.id),
+          '[]'
+        ) as categories_json,
+        COALESCE(
+          (SELECT json_agg(json_build_object(
+            'id', ea.user_id, 
+            'name', COALESCE(aup.name, 'Unknown'),
+            'avatarUrl', aup."avatarUrl"
+          ))
+           FROM event_attendees ea
+           LEFT JOIN user_profiles aup ON ea.user_id = aup.id
+           WHERE ea.event_id = e.id),
+          '[]'
+        ) as attendees_json,
+        COALESCE(
+          (SELECT json_agg(ec2.user_id)
+           FROM event_cohosts ec2
+           WHERE ec2.event_id = e.id),
+          '[]'
+        ) as cohosts_json
+      FROM events e
+      LEFT JOIN user_profiles up ON e.host_id = up.id
+      ${hasCategoryFilter ? "JOIN event_categories ecat ON e.id = ecat.event_id" : ""}
+      WHERE e.host_id = $1 AND e.start_datetime > NOW()
+      ${hasCategoryFilter ? "AND ecat.category_id = $2" : ""}
+      ORDER BY e.start_datetime ASC
+    `;
+
+    const bind = hasCategoryFilter ? [userId, categoryId] : [userId];
+
+    const rows = await sequelize.query<EventRow>(query, {
+      bind,
+      type: QueryTypes.SELECT,
+    });
+
+    return rows.map((row) => this.mapRowToEvent(row));
+  }
+
+  /**
+   * Maps a database row with JSON aggregated fields to an Event domain object
+   */
+  private mapRowToEvent(row: EventRow): Event {
+    const categories =
+      typeof row.categories_json === "string"
+        ? JSON.parse(row.categories_json || "[]")
+        : row.categories_json || [];
+
+    const attendees =
+      typeof row.attendees_json === "string"
+        ? JSON.parse(row.attendees_json || "[]")
+        : row.attendees_json || [];
+
+    const cohosts =
+      typeof row.cohosts_json === "string"
+        ? JSON.parse(row.cohosts_json || "[]")
+        : row.cohosts_json || [];
+
+    return Event.reconstitute({
+      id: row.id,
+      title: row.title,
+      description: row.description ?? undefined,
+      categories: categories.filter((c: any) => c !== null),
+      startDateTime: row.start_datetime,
+      endDateTime: row.end_datetime,
+      latitude: row.latitude ?? undefined,
+      longitude: row.longitude ?? undefined,
+      capacity: row.capacity ?? undefined,
+      hostId: row.host_id,
+      host: row.host_name
+        ? {
+            id: row.host_id,
+            name: row.host_name,
+            avatarUrl: row.host_avatar ?? undefined,
+          }
+        : undefined,
+      attendees: attendees.filter((a: any) => a !== null),
+      cohosts: cohosts.filter((c: any) => c !== null),
+      address: row.address,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    });
   }
 
   async save(event: Event): Promise<void> {
@@ -247,60 +427,5 @@ export class SqlEventRepository implements IEventRepository {
       { bind: [userId], type: QueryTypes.SELECT }
     );
     return parseInt((result[0] as any).count, 10);
-  }
-
-  async findAttending(userId: string, categoryId?: string): Promise<Event[]> {
-    let query = `
-      SELECT e.id 
-      FROM events e
-      JOIN event_attendees ea ON e.id = ea.event_id
-      ${
-        categoryId && categoryId !== "All"
-          ? "JOIN event_categories ec ON e.id = ec.event_id"
-          : ""
-      }
-      WHERE ea.user_id = $1 AND e.start_datetime > NOW()
-      ${categoryId && categoryId !== "All" ? "AND ec.category_id = $2" : ""}
-      ORDER BY e.start_datetime ASC
-    `;
-
-    const bind = [userId];
-    if (categoryId && categoryId !== "All") bind.push(categoryId);
-
-    const ids = await sequelize.query(query, { bind, type: QueryTypes.SELECT });
-
-    const events: Event[] = [];
-    for (const row of ids as any[]) {
-      const event = await this.findById(row.id);
-      if (event) events.push(event);
-    }
-    return events;
-  }
-
-  async findHosted(userId: string, categoryId?: string): Promise<Event[]> {
-    let query = `
-      SELECT e.id 
-      FROM events e
-      ${
-        categoryId && categoryId !== "All"
-          ? "JOIN event_categories ec ON e.id = ec.event_id"
-          : ""
-      }
-      WHERE e.host_id = $1 AND e.start_datetime > NOW()
-      ${categoryId && categoryId !== "All" ? "AND ec.category_id = $2" : ""}
-      ORDER BY e.start_datetime ASC
-    `;
-
-    const bind = [userId];
-    if (categoryId && categoryId !== "All") bind.push(categoryId);
-
-    const ids = await sequelize.query(query, { bind, type: QueryTypes.SELECT });
-
-    const events: Event[] = [];
-    for (const row of ids as any[]) {
-      const event = await this.findById(row.id);
-      if (event) events.push(event);
-    }
-    return events;
   }
 }
