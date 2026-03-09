@@ -67,7 +67,7 @@ export class SqlEventRepository implements IEventRepository {
         ) as cohosts_json
       FROM events e
       LEFT JOIN user_profiles up ON e.host_id = up.id
-      ORDER BY e.start_datetime ASC
+      ORDER BY e.start_datetime DESC
     `;
 
     const rows = await sequelize.query<EventRow>(query, {

@@ -73,7 +73,7 @@ export class EventRepository implements IEventRepository {
           as: "cohosts",
         },
       ],
-      order: [["startDateTime", "ASC"]],
+      order: [["startDateTime", "DESC"]],
     });
 
     return eventModels.map((model) => EventMapper.toDomain(model));
